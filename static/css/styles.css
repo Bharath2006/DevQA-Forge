@@ -1,0 +1,587 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #0a0c12;
+  font-family: 'Inter', 'Fira Code', monospace;
+  padding: 1.5rem;
+  min-height: 100vh;
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image:
+    linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 10;
+}
+
+.dev-card {
+  background: rgba(18, 22, 32, 0.94);
+  backdrop-filter: blur(12px);
+  border-radius: 1.5rem;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: all 0.2s;
+}
+
+h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  font-family: 'Fira Code', monospace;
+  background: linear-gradient(135deg, #60a5fa, #a78bfa, #c084fc);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  letter-spacing: -0.5px;
+}
+
+.badge-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #1e293b;
+  padding: 0.25rem 0.9rem;
+  border-radius: 2rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  font-family: 'Fira Code', monospace;
+  border: 1px solid #60a5fa;
+  color: #60a5fa;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background: #10b981;
+  border-radius: 50%;
+  animation: pulse 1.2s infinite;
+  box-shadow: 0 0 4px #10b981;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+}
+
+.code-textarea {
+  width: 100%;
+  background: #0f111a;
+  border: 1px solid #2d3e5f;
+  border-radius: 1rem;
+  padding: 1rem;
+  font-size: 0.85rem;
+  font-family: 'Fira Code', monospace;
+  color: #e2e8f0;
+  resize: vertical;
+  transition: all 0.2s;
+}
+
+.code-textarea:focus {
+  outline: none;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+}
+
+.btn-group {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-top: 1.2rem;
+}
+
+.btn-dev {
+  padding: 0.6rem 1.4rem;
+  border-radius: 2rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  font-family: 'Fira Code', monospace;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #1e293b;
+  color: #f1f5f9;
+}
+
+.btn-primary-dev {
+  background: linear-gradient(95deg, #3b82f6, #8b5cf6);
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary-dev:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+}
+
+.btn-green-dev {
+  background: linear-gradient(95deg, #059669, #10b981);
+}
+
+.btn-red-dev {
+  background: linear-gradient(95deg, #dc2626, #ef4444);
+}
+
+.btn-purple-dev {
+  background: linear-gradient(95deg, #7c3aed, #a855f7);
+}
+
+.btn-orange-dev {
+  background: linear-gradient(95deg, #ea580c, #f97316);
+}
+
+.pipeline-container {
+  margin: 1.5rem 0;
+  padding: 1.2rem;
+  background: rgba(13, 17, 23, 0.8);
+  border-radius: 1.5rem;
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  backdrop-filter: blur(4px);
+}
+
+.step-flow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.step-node-dev {
+  background: #111827;
+  border-radius: 1rem;
+  padding: 0.7rem 1rem;
+  min-width: 120px;
+  text-align: center;
+  border-left: 3px solid #60a5fa;
+  transition: all 0.25s;
+  cursor: default;
+}
+
+.step-node-dev.active {
+  border-left-color: #fbbf24;
+  background: #1e293b;
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.2);
+  transform: translateY(-2px);
+}
+
+.step-num {
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: 'Fira Code', monospace;
+  color: #60a5fa;
+}
+
+.step-name {
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: #e2e8f0;
+}
+
+.step-desc {
+  font-size: 0.65rem;
+  color: #94a3b8;
+}
+
+.arrow-icon {
+  font-size: 1.2rem;
+  color: #fbbf24;
+  align-self: center;
+}
+
+.flow-canvas {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.test-card-dev {
+  background: #0f172a;
+  border-radius: 1rem;
+  padding: 1rem;
+  margin-top: 0.8rem;
+  border: 1px solid #1e293b;
+  transition: all 0.2s;
+}
+
+.test-card-dev:hover {
+  border-color: #60a5fa;
+  background: #131c2c;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Staggered reveal helpers for pipeline -> QA flow */
+.stagger-hidden {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.stagger-visible {
+  animation: fadeIn 0.36s ease-out forwards;
+}
+
+.priority-tag {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 2rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  font-family: 'Fira Code', monospace;
+}
+
+.priority-high {
+  background: #dc2626;
+  color: white;
+}
+
+.priority-med {
+  background: #f59e0b;
+  color: #1a1a2e;
+}
+
+.priority-low {
+  background: #10b981;
+  color: white;
+}
+
+.stat-badge-dev {
+  background: #1e293b;
+  border-radius: 2rem;
+  padding: 0.3rem 1rem;
+  font-size: 0.75rem;
+  font-family: 'Fira Code', monospace;
+  border: 1px solid #334155;
+  color: #cbd5e1;
+}
+
+.filter-chip {
+  background: #1e293b;
+  border-radius: 2rem;
+  padding: 0.3rem 1rem;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: 0.1s;
+  border: 1px solid #334155;
+}
+
+.filter-chip.active-filter {
+  background: #3b82f6;
+  color: white;
+  border-color: #60a5fa;
+}
+
+.filter-chip:hover {
+  background: #2d3e5f;
+}
+
+details summary {
+  cursor: pointer;
+  color: #60a5fa;
+  font-size: 0.8rem;
+}
+
+footer {
+  text-align: center;
+  margin-top: 2rem;
+  font-size: 0.7rem;
+  color: #6b7280;
+  font-family: 'Fira Code', monospace;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #60a5fa;
+  border-radius: 4px;
+}
+
+.qa-dashboard {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin: 1rem 0;
+}
+
+.chart-card {
+  flex: 1;
+  min-width: 220px;
+  background: #0f172ad9;
+  border-radius: 1rem;
+  padding: 0.7rem;
+  border: 1px solid #334155;
+}
+
+canvas.chart-canvas {
+  max-height: 160px;
+  width: 100%;
+}
+
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 1.2rem;
+  align-items: center;
+}
+
+.feedback-section {
+  margin-top: 1.5rem;
+  background: linear-gradient(135deg, #0f172a, #0a0f1a);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+}
+
+.feedback-header {
+  background: rgba(168, 85, 247, 0.15);
+  padding: 0.8rem 1.2rem;
+  border-bottom: 1px solid #7c3aed;
+  border-radius: 1.5rem 1.5rem 0 0;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  color: #cbd5e6;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  font-family: 'Fira Code', monospace;
+}
+
+.form-control {
+  width: 100%;
+  background: #0f111a;
+  border: 1px solid #334155;
+  border-radius: 0.8rem;
+  padding: 0.7rem 1rem;
+  color: #e2e8f0;
+  font-size: 0.85rem;
+  font-family: 'Inter', monospace;
+  transition: all 0.2s;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #a855f7;
+  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
+}
+
+.form-control.error-input {
+  border-color: #ef4444;
+}
+
+.rating-stars {
+  display: flex;
+  gap: 8px;
+  margin-top: 5px;
+}
+
+.star {
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #334155;
+  transition: 0.1s;
+}
+
+.star.active {
+  color: #fbbf24;
+  text-shadow: 0 0 4px #fbbf24;
+}
+
+.star:hover {
+  transform: scale(1.1);
+}
+
+.feedback-preview {
+  background: #0a0e14;
+  border-radius: 0.8rem;
+  padding: 0.8rem;
+  margin-top: 1rem;
+  font-size: 0.7rem;
+  font-family: 'Fira Code', monospace;
+  color: #94a3b8;
+  border-left: 3px solid #a855f7;
+}
+
+.toast-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #1e293b;
+  border-left: 4px solid #10b981;
+  padding: 0.8rem 1.2rem;
+  border-radius: 0.8rem;
+  color: #e2e8f0;
+  font-size: 0.8rem;
+  z-index: 1000;
+  animation: slideInRight 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.toast-notification.error {
+  border-left-color: #ef4444;
+}
+
+.chat-panel {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  background: rgba(15, 23, 42, 0.92);
+}
+
+.chat-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.chat-messages {
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 1rem;
+  background: #0a101c;
+  border: 1px solid #334155;
+  border-radius: 1rem;
+  margin-bottom: 1rem;
+}
+
+.chat-message {
+  margin-bottom: 0.9rem;
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  line-height: 1.4;
+  font-size: 0.9rem;
+}
+
+.chat-message.user {
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(96, 165, 250, 0.25);
+  color: #dbeafe;
+  text-align: right;
+}
+
+.chat-message.bot {
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.28);
+  color: #e0d7ff;
+}
+
+.chat-control {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.chat-control input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.table-actions button {
+  margin-right: 0.4rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.76rem;
+  padding: 0.45rem 0.8rem;
+}
+
+.qa-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin-top: 1rem;
+}
+
+.qa-table th,
+.qa-table td {
+  border: 1px solid #334155;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.qa-table th {
+  background: #111827;
+  color: #cbd5e1;
+  font-weight: 600;
+}
+
+.qa-table tbody tr:hover {
+  background: rgba(96, 165, 250, 0.08);
+}
+
+.qa-table td .action-btn {
+  margin-right: 0.35rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
+  padding: 0.35rem 0.7rem;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #64748b;
+}
