@@ -1,8 +1,13 @@
 # DevQA Forge 🚀  
 ### AI-Powered QA Test Case Generator & API Testing Platform
 
-[DevQA Forge GitHub Repository](https://github.com/Bharath2006/DevQA-Forge)
+🌐 **Live Demo:**  
+https://devqa-forge.onrender.com
 
+📂 **GitHub Repository:**  
+https://github.com/Bharath2006/DevQA-Forge
+
+# 📖 About The Project
 DevQA Forge is an intelligent QA automation and testing platform built to simplify software testing workflows using AI.  
 It helps developers, QA engineers, and testers generate test cases, analyze APIs, validate databases, visualize testing flows, and export reports — all from a modern web interface.
 
@@ -596,13 +601,16 @@ This project is licensed under the MIT License.
 # 👨‍💻 Author
 
 Developed by **Bharath S**
-
 - Power Platform Developer
-- QA & AI Automation Enthusiast
+  
+### 🔗 Connect With Me
 
-GitHub:
+💼 LinkedIn  
+https://www.linkedin.com/in/bharath-s-b46a43315
 
+💻 GitHub  
 https://github.com/Bharath2006
+
 
 ---
 
