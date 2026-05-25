@@ -61,6 +61,5 @@ def reset_chat():
     return jsonify({"status": "success"})
 
 if __name__ == "__main__":
-    print("🤖 Flask Server Started!")
-    print("Go to http://127.0.0.1:5000 in your browser.")
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
