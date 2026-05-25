@@ -6,19 +6,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>DevQA Forge | AI Test Case Generator + Feedback Hub</title>
 
-  <!-- Google Fonts + Font Awesome 6 -->
   <link
     href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 
-  <!-- Chart.js -->
+  <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lodash/lodash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/moment/moment.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.js"></script>
-  <!-- jsPDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <!-- Marked.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js"></script>
-  <script src="/static/js/script.js"></script>
+
   <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 
@@ -30,671 +31,895 @@
       <h1><i class="fas fa-code-branch"></i> DevQA Forge</h1>
       <div class="badge-live"><span class="pulse-dot"></span> AI POWERED</div>
     </div>
-    <p style="color: #9ca3af; margin-bottom: 1.5rem; font-size: 0.85rem;"><i class="fas fa-magic"></i> Intelligent test
-      case generation | Real-time analytics | Share your feedback</p>
+    <p style="color: #9ca3af; margin-bottom: 1.5rem; font-size: 0.85rem;">
+      <i class="fas fa-magic"></i> Intelligent test case generation | Real-time analytics | Share your feedback
+    </p>
+    <div class="dev-card"
+      style="display: flex; flex-direction: column; position: relative; overflow: hidden; background: #070a12; border: 1px solid #1e293b; border-radius: 0.75rem;">
 
-    <div class="dev-card" style="padding: 1.3rem;">
-      <label style="color: #cbd5e6; font-size: 0.8rem; margin-bottom: 0.5rem; display: block;"><i
-          class="fas fa-list-ul"></i> Feature Requirements</label>
-      <textarea id="reqInput" class="code-textarea" rows="3"
-        placeholder="Example:&#10;- JWT Authentication Middleware&#10;- GraphQL Rate Limiter&#10;- Real-time WebSocket Logger&#10;- Database Migration Rollback"></textarea>
-      <div class="btn-group">
-        <button id="runPipelineBtn" class="btn-dev btn-primary-dev"><i class="fas fa-play"></i> GENERATE TEST
-          SUITE</button>
-        <button id="exportPdfBtn" class="btn-dev btn-green-dev"><i class="fas fa-file-pdf"></i> EXPORT PDF</button>
-        <button id="clearBtn" class="btn-dev btn-red-dev"><i class="fas fa-trash-alt"></i> CLEAR ALL</button>
-        <button id="toggleFlowBtn" class="btn-dev btn-purple-dev"><i class="fas fa-diagram-project"></i> TOGGLE
-          PIPELINE</button>
-      </div>
-    </div>
-
-    <div id="pipelineVisual" class="pipeline-container">
-      <h3 style="color: #60a5fa; font-size: 0.9rem; margin-bottom: 0.5rem;"><i class="fas fa-chart-line"></i> ▸
-        GENERATION PIPELINE</h3>
-      <div id="stepContainer" class="step-flow"></div>
-      <div class="flow-canvas">
-        <canvas id="pipelineChart" width="500" height="90"
-          style="max-width:100%; background:#0a0e14; border-radius: 1rem; padding: 6px;"></canvas>
-      </div>
-      <div id="pipelineStatus"
-        style="margin-top: 10px; font-size: 0.7rem; font-family: 'Fira Code', monospace; color: #8b9dc3; text-align: center;">
-        <i class="fas fa-hourglass-half"></i> Ready — Enter features and click GENERATE
-      </div>
-    </div>
-
-    <div class="dev-card chat-panel">
-      <div class="chat-panel-header">
-        <div>
-          <h3 style="color:#a78bfa; font-size:1rem; margin:0;"><i class="fas fa-robot"></i> QA Chat Assistant</h3>
-          <p style="color:#94a3b8; font-size:0.78rem; margin:0.25rem 0 0 0;">Ask the QA bot about your current test
-            cases, defects, or risk coverage.</p>
-        </div>
-        <button id="chatResetBtn" class="btn-dev" style="background:#334155; padding:0.5rem 1rem;">Reset Chat</button>
-      </div>
-      <div id="chatMessages" class="chat-messages">
-        <div class="chat-message bot">Hello QA tester! I am ready to review your test cases, suggest improvements, and
-          help convert findings into table actions.</div>
-      </div>
-      <div class="chat-control">
-        <input type="text" id="chatInput" class="form-control" placeholder="Ask the QA assistant about your tests..."
-          autocomplete="off">
-        <button id="chatSendBtn" class="btn-dev btn-green-dev"><i class="fas fa-paper-plane"></i> SEND</button>
-      </div>
-    </div>
-
-    <!-- QA Dashboard -->
-    <div id="qaDashboard" style="display: none;">
-      <div class="dev-card" style="padding: 1rem; margin: 1rem 0;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-          <h3 style="color: #a78bfa; font-size: 1rem;"><i class="fas fa-chart-pie"></i> Quality Analytics</h3>
-          <span class="stat-badge-dev" id="totalTestCountSpan">0 tests</span>
-        </div>
-        <div class="qa-dashboard">
-          <div class="chart-card">
-            <div style="font-size:0.7rem;color:#60a5fa;"><i class="fas fa-exclamation-triangle"></i> Priority
-              Distribution</div><canvas id="priorityDonutChart" class="chart-canvas"></canvas>
+      <div
+        style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; background: linear-gradient(to right, rgba(15, 23, 42, 0.6), rgba(30, 41, 59, 0.3)); border-bottom: 1px solid rgba(51, 65, 85, 0.4); flex-wrap: wrap; gap: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="display: flex; gap: 6px;">
+            <span
+              style="width: 10px; height: 10px; border-radius: 50%; background: #ef4444; display: inline-block; opacity: 0.8;"></span>
+            <span
+              style="width: 10px; height: 10px; border-radius: 50%; background: #eab308; display: inline-block; opacity: 0.8;"></span>
+            <span
+              style="width: 10px; height: 10px; border-radius: 50%; background: #22c55e; display: inline-block; opacity: 0.8;"></span>
           </div>
-          <div class="chart-card">
-            <div style="font-size:0.7rem;color:#60a5fa;"><i class="fas fa-layer-group"></i> Test Type Coverage</div>
-            <canvas id="typeDonutChart" class="chart-canvas"></canvas>
+          <span style="height: 14px; width: 1px; background: #334155;"></span>
+          <label for="reqInput"
+            style="color: #cbd5e6; font-size: 0.78rem; font-family: 'Fira Code', monospace; font-weight: 600; letter-spacing: 0.2px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+            <i class="fas fa-terminal" style="color: #60a5fa; font-size: 0.75rem;"></i> feature_manifest.txt
+          </label>
+        </div>
+
+        <div
+          style="display: flex; align-items: center; gap: 0.75rem; font-family: 'Fira Code', monospace; font-size: 0.68rem;">
+          <button id="helpTriggerBtn"
+            style="background: rgba(96, 165, 250, 0.1); border: 1px solid rgba(96, 165, 250, 0.2); border-radius: 4px; color: #60a5fa; cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: 600; padding: 2px 6px; font-family: inherit;">
+            <i class="fas fa-circle-info"></i> Report Engine Guide
+          </button>
+          <span style="color: #475569;"><i class="fas fa-code-merge"></i> Main Trunk</span>
+          <span style="color: #475569;">UTF-8</span>
+          <span
+            style="background: rgba(96, 165, 250, 0.1); color: #60a5fa; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(96, 165, 250, 0.15); font-weight: 600;">QA
+            Compiler v1.0</span>
+        </div>
+      </div>
+
+      <style>
+        .info-drawer {
+          max-height: 0;
+          overflow: hidden;
+          opacity: 0;
+          background: #0b1329;
+          border-bottom: 0 solid rgba(51, 65, 85, 0);
+          transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, padding 0.3s ease, border 0.3s ease;
+          font-family: system-ui, -apple-system, sans-serif;
+          box-sizing: border-box;
+        }
+
+        .info-drawer.open {
+          max-height: 320px;
+          opacity: 1;
+          padding: 1.25rem;
+          border-bottom: 1px dashed rgba(51, 65, 85, 0.5);
+        }
+
+        .ui-badge {
+          background: rgba(30, 41, 59, 0.8);
+          border: 1px solid #334155;
+          color: #94a3b8;
+          padding: 1px 4px;
+          border-radius: 3px;
+          font-family: 'Fira Code', monospace;
+          font-size: 0.65rem;
+        }
+      </style>
+
+      <div id="instructionDrawer" class="info-drawer">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+          <div>
+            <h4 style="margin: 0; color: #f8fafc; font-size: 0.85rem; font-weight: 600;">QA Report Generation Pipeline
+            </h4>
+            <p style="margin: 3px 0 0; color: #94a3b8; font-size: 0.75rem; line-height: 1.4;">
+              <strong>Purpose:</strong> Turns raw feature items or software specifications into comprehensive compliance
+              reports, test cases coverage metrics, and diagnostic analysis blueprints.
+            </p>
           </div>
-          <div class="chart-card">
-            <div style="font-size:0.7rem;color:#60a5fa;"><i class="fas fa-filter"></i> Smart Filters</div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px;">
-              <span class="filter-chip" data-filter-type="priority" data-filter-value="High">🔴 High Risk</span>
-              <span class="filter-chip" data-filter-type="priority" data-filter-value="Medium">🟡 Medium</span>
-              <span class="filter-chip" data-filter-type="priority" data-filter-value="Low">🟢 Low</span>
-              <span class="filter-chip" data-filter-type="type" data-filter-value="Security">🔒 Security</span>
-              <span class="filter-chip" data-filter-type="type" data-filter-value="Functional">⚙️ Functional</span>
-              <span class="filter-chip" data-filter-type="type" data-filter-value="Performance">⚡ Performance</span>
-              <span class="filter-chip" data-filter-type="type" data-filter-value="Integration">🔗 Integration</span>
-              <button id="clearFiltersBtn" class="btn-dev"
-                style="background:#334155; padding:0.2rem 0.8rem; font-size:0.7rem;"><i class="fas fa-eraser"></i>
-                Clear</button>
+          <button id="closeDrawerBtn"
+            style="background: none; border: none; color: #475569; cursor: pointer; font-size: 0.85rem; transition: color 0.2s;"
+            onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#475569'">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div
+          style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 0.75rem;">
+          <div
+            style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(51, 65, 85, 0.3); padding: 0.75rem; border-radius: 0.375rem;">
+            <span style="color: #60a5fa; font-family: 'Fira Code', monospace; font-size: 0.7rem; font-weight: 700;">[01]
+              INPUT FEATURES</span>
+            <p style="margin: 4px 0 0; color: #94a3b8; font-size: 0.72rem; line-height: 1.3;">List the targets or
+              microservices you intend to evaluate in the console area.</p>
+          </div>
+          <div
+            style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(51, 65, 85, 0.3); padding: 0.75rem; border-radius: 0.375rem;">
+            <span style="color: #c084fc; font-family: 'Fira Code', monospace; font-size: 0.7rem; font-weight: 700;">[02]
+              EVALUATE & COMPILE</span>
+            <p style="margin: 4px 0 0; color: #94a3b8; font-size: 0.72rem; line-height: 1.3;">Click <span
+                class="ui-badge">GENERATE TEST SUITE</span> to assemble structural reporting logs.</p>
+          </div>
+          <div
+            style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(51, 65, 85, 0.3); padding: 0.75rem; border-radius: 0.375rem;">
+            <span style="color: #34d399; font-family: 'Fira Code', monospace; font-size: 0.7rem; font-weight: 700;">[03]
+              EXPORT METRICS</span>
+            <p style="margin: 4px 0 0; color: #94a3b8; font-size: 0.72rem; line-height: 1.3;">View interactive charts
+              with <span class="ui-badge">TOGGLE PIPELINE</span> or output standalone PDF matrices.</p>
+          </div>
+        </div>
+      </div>
+      <div style="padding: 1.25rem; background: #070a12; flex-grow: 1;">
+        <div style="position: relative;">
+          <div
+            style="position: absolute; left: 14px; top: 14px; display: flex; flex-direction: column; text-align: right; width: 16px; font-family: 'Fira Code', monospace; font-size: 0.825rem; color: #334155; line-height: 1.5; pointer-events: none; user-select: none;">
+            <span>1</span>
+            <span>2</span>
+            <span>3</span>
+          </div>
+
+          <textarea id="reqInput" class="code-textarea" rows="3"
+            style="padding-left: 2.5rem; line-height: 1.5; font-size: 0.88rem; background: #04060b; border-color: #1e293b; width: 100%; box-sizing: border-box;"
+            placeholder="Example:&#10;- JWT Authentication Middleware&#10;- GraphQL Rate Limiter&#10;- Real-time WebSocket Logger&#10;- Database Migration Rollback"></textarea>
+        </div>
+
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-top: 1.25rem; gap: 1rem; border-top: 1px dashed rgba(51, 65, 85, 0.3); padding-top: 1rem;">
+
+          <div class="btn-group" style="margin-top: 0; gap: 0.5rem; display: flex;">
+            <button id="runPipelineBtn" class="btn-dev btn-primary-dev"
+              style="padding: 0.65rem 1.5rem; border-radius: 0.5rem; font-size: 0.825rem; font-weight: 700; letter-spacing: 0.3px;">
+              <i class="fas fa-play" style="font-size: 0.75rem;"></i> GENERATE TEST SUITE
+            </button>
+            <button id="exportPdfBtn" class="btn-dev btn-green-dev"
+              style="padding: 0.65rem 1.2rem; border-radius: 0.5rem; font-size: 0.825rem;">
+              <i class="fas fa-file-pdf"></i> EXPORT PDF
+            </button>
+          </div>
+
+          <div class="btn-group" style="margin-top: 0; gap: 0.5rem; display: flex;">
+            <button id="toggleFlowBtn" class="btn-dev btn-purple-dev"
+              style="padding: 0.65rem 1.1rem; border-radius: 0.5rem; font-size: 0.825rem;">
+              <i class="fas fa-diagram-project"></i> TOGGLE PIPELINE
+            </button>
+            <button id="clearBtn" class="btn-dev btn-red-dev"
+              style="padding: 0.65rem 1.1rem; border-radius: 0.5rem; font-size: 0.825rem; background: transparent; border: 1px solid rgba(239, 68, 68, 0.4); color: #ef4444;">
+              <i class="fas fa-trash-alt"></i> RESET
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <script>
+        document.addEventListener('DOMContentLoaded', () => {
+          const drawer = document.getElementById('instructionDrawer');
+          const openBtn = document.getElementById('helpTriggerBtn');
+          const closeBtn = document.getElementById('closeDrawerBtn');
+
+          const toggleDrawer = () => drawer.classList.toggle('open');
+
+          openBtn.addEventListener('click', toggleDrawer);
+          closeBtn.addEventListener('click', () => drawer.classList.remove('open'));
+
+          if (!document.getElementById('reqInput').value.trim()) {
+            setTimeout(() => drawer.classList.add('open'), 400);
+          }
+        });
+      </script>
+
+    </div>
+
+    <div id="pipelineVisual" class="pipeline-container"
+      style="display: flex; flex-direction: column; overflow: hidden; padding: 0; position: relative;">
+
+      <div
+        style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; background: linear-gradient(to right, rgba(15, 23, 42, 0.6), rgba(30, 41, 59, 0.3)); border-bottom: 1px solid rgba(56, 189, 248, 0.15); flex-wrap: wrap; gap: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <h3
+            style="color: #60a5fa; font-size: 0.85rem; font-weight: 700; font-family: 'Fira Code', monospace; margin: 0; letter-spacing: 0.3px;">
+            <i class="fas fa-microchip" style="animation: pulse 2s infinite;"></i> GENERATION PIPELINE INTERACTIVE
+          </h3>
+        </div>
+
+        <div
+          style="display: flex; align-items: center; gap: 12px; font-family: 'Fira Code', monospace; font-size: 0.68rem; color: #475569;">
+          <button id="visualHelpBtn"
+            style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 4px; color: #38bdf8; cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: 600; padding: 2px 6px; font-family: inherit;">
+            <i class="fas fa-circle-question"></i> Telemetry Info
+          </button>
+          <span style="color: #1e293b;">|</span>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <span style="width: 6px; height: 6px; border-radius: 50%; background: #38bdf8;"></span>
+            <span>Nodes: 4 Active</span>
+          </div>
+          <span style="color: #1e293b;">|</span>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <i class="fas fa-bolt" style="color: #eab308;"></i>
+            <span>Delay: 0ms</span>
+          </div>
+        </div>
+      </div>
+
+      <style>
+        .visual-drawer {
+          max-height: 0;
+          overflow: hidden;
+          opacity: 0;
+          background: #090e1a;
+          border-bottom: 0 solid rgba(56, 189, 248, 0);
+          transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, padding 0.3s ease;
+          font-family: system-ui, -apple-system, sans-serif;
+          box-sizing: border-box;
+        }
+
+        .visual-drawer.open {
+          max-height: 220px;
+          opacity: 1;
+          padding: 1rem 1.25rem;
+          border-bottom: 1px dashed rgba(56, 189, 248, 0.2);
+        }
+
+        .metric-key {
+          font-family: 'Fira Code', monospace;
+          color: #38bdf8;
+          font-weight: bold;
+        }
+      </style>
+
+      <div id="visualDrawer" class="visual-drawer">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <span
+            style="color: #f1f5f9; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+            <i class="fas fa-chart-network" style="color: #a855f7;"></i> Visualizer Diagnostics
+          </span>
+          <button id="closeVisualDrawer"
+            style="background: none; border: none; color: #475569; cursor: pointer; font-size: 0.8rem;">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <p style="margin: 0 0 0.75rem 0; color: #64748b; font-size: 0.75rem; line-height: 1.4;">
+          This viewport renders data parsing states in real time. Once your feature arrays process, watch the canvas
+          nodes update sequentially to produce reports.
+        </p>
+        <div
+          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; font-size: 0.72rem; color: #94a3b8;">
+          <div>
+            <span class="metric-key">Canvas Pipeline:</span> Tracks the compilation stream dynamically from <span
+              style="color: #cbd5e1;">Parse</span> straight down to <span style="color: #cbd5e1;">Visualize</span>.
+          </div>
+          <div>
+            <span class="metric-key">Status Box:</span> Displays systemic warnings, success flags, and download ready
+            notifications.
+          </div>
+        </div>
+      </div>
+      <div style="padding: 1.25rem; background: #070a12;">
+
+        <div id="stepContainer" class="step-flow" style="margin-top: 0; margin-bottom: 1.25rem;"></div>
+
+        <div class="flow-canvas"
+          style="margin-top: 0; position: relative; background: #04060b; border-radius: 0.75rem; border: 1px solid #1e293b; padding: 8px;">
+
+          <div
+            style="position: absolute; top: 8px; left: 12px; font-family: 'Fira Code', monospace; font-size: 0.6rem; color: #1e293b; pointer-events: none; user-select: none;">
+            SYS_FLOW // CH_01
+          </div>
+
+          <canvas id="pipelineChart" width="500" height="90"
+            style="max-width: 100%; background: transparent; display: block; margin: 0 auto;"></canvas>
+        </div>
+
+        <div id="pipelineStatus"
+          style="margin-top: 1rem; padding: 0.65rem; border-radius: 0.5rem; background: rgba(30, 41, 59, 0.2); border: 1px solid rgba(51, 65, 85, 0.3); font-size: 0.72rem; font-family: 'Fira Code', monospace; color: #94a3b8; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <i class="fas fa-terminal" style="color: #38bdf8; font-size: 0.7rem;"></i> <span>Ready — Enter specific
+            architecture features and click GENERATE SUITE</span>
+        </div>
+      </div>
+
+    </div>
+
+    <script>
+
+      document.addEventListener('DOMContentLoaded', () => {
+        const vDrawer = document.getElementById('visualDrawer');
+        const vHelpBtn = document.getElementById('visualHelpBtn');
+        const vCloseBtn = document.getElementById('closeVisualDrawer');
+
+        if (vDrawer && vHelpBtn && vCloseBtn) {
+          vHelpBtn.addEventListener('click', () => vDrawer.classList.toggle('open'));
+          vCloseBtn.addEventListener('click', () => vDrawer.classList.remove('open'));
+        }
+      });
+    </script>
+
+    <div class="dev-card testing-section" style="display: flex; flex-direction: column; overflow: hidden; padding: 0;">
+
+      <div
+        style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; background: linear-gradient(to right, rgba(15, 23, 42, 0.6), rgba(30, 41, 59, 0.3)); border-bottom: 1px solid rgba(167, 139, 250, 0.2); flex-wrap: wrap; gap: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div
+            style="background: rgba(167, 139, 250, 0.1); width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(167, 139, 250, 0.25);">
+            <i class="fas fa-network-wired" style="color: #a78bfa; font-size: 1rem;"></i>
+          </div>
+          <div>
+            <h2
+              style="color: #f8fafc; font-size: 0.95rem; font-weight: 700; font-family: 'Fira Code', monospace; margin: 0; letter-spacing: -0.2px;">
+              Advanced API & DB Testing Environment
+            </h2>
+            <p style="color: #64748b; font-size: 0.72rem; margin: 0.15rem 0 0 0;">Automated endpoint mapping, scheme
+              reflection, and structural validation</p>
+          </div>
+        </div>
+
+        <div
+          style="display: flex; align-items: center; gap: 6px; font-family: 'Fira Code', monospace; font-size: 0.65rem; color: #475569; background: #05070c; padding: 0.35rem 0.65rem; border-radius: 0.4rem; border: 1px solid #1e293b;">
+          <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981;"></span> TLS_1.3_READY
+        </div>
+      </div>
+
+      <div
+        style="padding: 1.25rem; background: #070a12; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
+
+        <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+          <div
+            style="font-size: 0.68rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.8px; font-family: 'Fira Code', monospace; margin-bottom: 0.2rem;">
+            API Pipeline Config</div>
+
+          <div>
+            <label for="apiUpload"
+              style="font-size: 0.75rem; color: #94a3b8; font-weight: 600; display: block; margin-bottom: 0.4rem; font-family: 'Fira Code', monospace;">
+              Upload OpenAPI / Swagger Spec
+            </label>
+            <div
+              style="position: relative; border: 1px dashed #1e293b; background: #05070c; border-radius: 0.5rem; padding: 0.5rem; display: flex; align-items: center; transition: border-color 0.2s;">
+              <i class="fas fa-cloud-upload-alt"
+                style="color: #475569; margin-left: 0.65rem; position: absolute; pointer-events: none;"></i>
+              <input type="file" id="apiUpload" accept=".json,.yaml,.yml" class="form-control"
+                style="border: none; background: transparent; padding-left: 2.2rem; margin-bottom: 0; font-size: 0.8rem; height: auto; cursor: pointer;" />
+            </div>
+          </div>
+
+          <div>
+            <label for="apiBaseUrl"
+              style="font-size: 0.75rem; color: #94a3b8; font-weight: 600; display: block; margin-bottom: 0.4rem; font-family: 'Fira Code', monospace;">
+              OR Enter Live API Base URL
+            </label>
+            <div style="position: relative;">
+              <input type="text" id="apiBaseUrl" class="form-control" placeholder="https://api.example.com"
+                style="padding-left: 2.4rem; border-radius: 0.5rem; background: #05070c; border-color: #1e293b;" />
+              <span
+                style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-family: 'Fira Code', monospace; font-size: 0.68rem; color: #3b82f6; font-weight: 700; user-select: none; pointer-events: none;">URL</span>
+            </div>
+          </div>
+
+          <div>
+            <label for="apiToken"
+              style="font-size: 0.75rem; color: #94a3b8; font-weight: 600; display: block; margin-bottom: 0.4rem; font-family: 'Fira Code', monospace;">
+              Bearer Token <span style="color: #475569; font-weight: 400;">(Optional)</span>
+            </label>
+            <div style="position: relative;">
+              <input type="password" id="apiToken" class="form-control" placeholder="JWT / Bearer Hash"
+                style="padding-left: 2.4rem; border-radius: 0.5rem; background: #05070c; border-color: #1e293b;" />
+              <i class="fas fa-key"
+                style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #475569; font-size: 0.75rem; pointer-events: none;"></i>
             </div>
           </div>
         </div>
-        <div id="activeFiltersBadge" class="filter-bar"></div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+          <div
+            style="background: rgba(11, 15, 25, 0.6); border: 1px solid #1e293b; border-radius: 0.75rem; padding: 1rem; display: flex; flex-direction: column; gap: 0.65rem;">
+            <div
+              style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem; border-bottom: 1px dashed rgba(51, 65, 85, 0.4); padding-bottom: 0.5rem;">
+              <h3
+                style="color: #38bdf8; font-size: 0.8rem; font-weight: 700; font-family: 'Fira Code', monospace; margin: 0; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-database"></i> Database Validation Substrate
+              </h3>
+              <span style="font-size: 0.6rem; font-family: 'Fira Code', monospace; color: #475569;">SECURE_CONN</span>
+            </div>
+
+            <div style="position: relative;">
+              <select id="dbType" class="form-control"
+                style="background: #05070c; border-color: #1e293b; border-radius: 0.4rem; font-size: 0.8rem; appearance: none; -webkit-appearance: none; padding-left: 2.2rem; cursor: pointer;">
+                <option value="">Select Target Database...</option>
+                <option value="mysql">MySQL Engine</option>
+                <option value="postgres">PostgreSQL Engine</option>
+                <option value="mongodb">MongoDB NoSQL Schema</option>
+                <option value="sqlserver">Microsoft SQL Server</option>
+              </select>
+              <i class="fas fa-server"
+                style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #475569; font-size: 0.75rem; pointer-events: none;"></i>
+              <i class="fas fa-chevron-down"
+                style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #475569; font-size: 0.7 rules; pointer-events: none;"></i>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+              <input type="text" id="dbHost" class="form-control" placeholder="Host IP / Cluster"
+                style="background: #05070c; border-color: #1e293b; border-radius: 0.4rem; font-size: 0.8rem;" />
+              <input type="text" id="dbName" class="form-control" placeholder="Database Name"
+                style="background: #05070c; border-color: #1e293b; border-radius: 0.4rem; font-size: 0.8rem;" />
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+              <div style="position: relative;">
+                <input type="text" id="dbUser" class="form-control" placeholder="Username"
+                  style="background: #05070c; border-color: #1e293b; border-radius: 0.4rem; font-size: 0.8rem; padding-left: 1.8rem;" />
+                <i class="fas fa-user"
+                  style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #334155; font-size: 0.7rem;"></i>
+              </div>
+              <div style="position: relative;">
+                <input type="password" id="dbPass" class="form-control" placeholder="Password"
+                  style="background: #05070c; border-color: #1e293b; border-radius: 0.4rem; font-size: 0.8rem; padding-left: 1.8rem;" />
+                <i class="fas fa-lock"
+                  style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #334155; font-size: 0.7 rules;"></i>
+              </div>
+            </div>
+          </div>
+
+          <div
+            style="background: rgba(167, 139, 250, 0.04); border: 1px dashed rgba(167, 139, 250, 0.2); padding: 0.75rem; border-radius: 0.5rem; font-family: system-ui, sans-serif;">
+            <span
+              style="color: #a78bfa; font-family: 'Fira Code', monospace; font-size: 0.68rem; font-weight: 700; display: block; margin-bottom: 2px;">ENVIRONMENT
+              INSTRUCTIONS:</span>
+            <p style="margin: 0; font-size: 0.72rem; color: #94a3b8; line-height: 1.35;">
+              Provide either a physical OpenAPI specification asset file or type a live base endpoint down to resolve
+              your system map. Connect your targeted schema architecture parameters to trigger structural assertions.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div
+        style="padding: 1rem 1.25rem; background: #090d16; border-top: 1px solid rgba(30, 41, 59, 0.8); display: flex; flex-direction: column; gap: 0.75rem;">
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0;">
+          <button id="analyzeApiBtn" class="btn-dev btn-primary-dev"
+            style="padding: 0.55rem 1.2rem; border-radius: 0.4rem; font-size: 0.78rem;">
+            <i class="fas fa-search"></i> Analyze Specification
+          </button>
+          <button id="analyzeLiveApiBtn" class="btn-dev"
+            style="padding: 0.55rem 1.2rem; border-radius: 0.4rem; font-size: 0.78rem; background: linear-gradient(135deg, #059669, #10b981); color: white; border: none;">
+            <i class="fas fa-plug"></i> Analyze Live API
+          </button>
+          <button id="runDbValidationBtn" class="btn-dev"
+            style="padding: 0.55rem 1.2rem; border-radius: 0.4rem; font-size: 0.78rem; background: linear-gradient(135deg, #d97706, #f59e0b); color: white; border: none;">
+            <i class="fas fa-database"></i> Validate Database
+          </button>
+        </div>
+        <div id="apiLoader"
+          style="display: none; padding: 0.65rem 1rem; border-radius: 0.4rem; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2); color: #38bdf8; font-size: 0.75rem; font-family: 'Fira Code', monospace; align-items: center; gap: 8px;">
+          <i class="fas fa-spinner fa-spin"></i> Runtime: Running Deep API Vulnerability Analysis Matrix...
+        </div>
+
+        <div id="apiReport"
+          style="margin-top: 0; color: #cbd5e1; font-family: 'Fira Code', monospace; font-size: 0.75rem; max-height: 200px; overflow-y: auto;">
+        </div>
+      </div>
+
+    </div>
+
+    <div class="dev-card chat-panel"
+      style="border-radius: 1.25rem; overflow: hidden; display: flex; flex-direction: column; margin-top: 1.5rem;">
+
+      <div class="chat-panel-header"
+        style="padding: 1.25rem; background: linear-gradient(to right, rgba(15, 23, 42, 0.6), rgba(30, 41, 59, 0.4)); border-bottom: 1px solid rgba(51, 65, 85, 0.5); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div style="display: flex; align-items: center; gap: 0.85rem;">
+          <div
+            style="position: relative; background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.1)); width: 42px; height: 42px; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(167, 139, 250, 0.3); box-shadow: 0 4px 12px rgba(0,0,0,0.25);">
+            <i class="fas fa-microchip" style="color: #a78bfa; font-size: 1.15rem;"></i>
+            <span class="pulse-dot"
+              style="position: absolute; bottom: -2px; right: -2px; width: 10px; height: 10px; border: 2px solid #0b0f19;"></span>
+          </div>
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <h3
+                style="color: #f8fafc; font-size: 1rem; font-weight: 700; margin: 0; font-family: 'Fira Code', monospace; letter-spacing: -0.3px;">
+                QA Engine Core</h3>
+              <span
+                style="font-size: 0.625rem; font-weight: 600; text-transform: uppercase; background: rgba(59, 130, 246, 0.15); color: #60a5fa; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(96, 165, 250, 0.2);">v2.4-Agent</span>
+            </div>
+            <p style="color: #64748b; font-size: 0.72rem; margin: 0.15rem 0 0 0; font-family: 'Inter', sans-serif;">
+              Context-aware test exploration, code review, and risk telemetry analyzer</p>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <div
+            style="font-family: 'Fira Code', monospace; font-size: 0.7rem; color: #475569; background: #090d16; padding: 0.35rem 0.65rem; border-radius: 0.5rem; border: 1px solid #1e293b; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fas fa-database" style="color: #38bdf8;"></i> <span style="color: #94a3b8;">Context Window:</span>
+            <span style="color: #34d399; font-weight: 600;">Active Suite</span>
+          </div>
+          <button id="chatResetBtn" class="btn-dev"
+            style="padding: 0.45rem 0.85rem; font-size: 0.72rem; border-color: rgba(255,255,255,0.04); background: rgba(30, 41, 59, 0.8); border-radius: 0.5rem;">
+            <i class="fas fa-power-off" style="color: #f43f5e;"></i> Wipe Session
+          </button>
+        </div>
+      </div>
+
+      <div style="display: flex; min-height: 340px; background: #070a12;">
+
+        <div class="hidden-mobile"
+          style="width: 220px; border-right: 1px solid #1e293b; background: rgba(9, 13, 22, 0.6); padding: 1rem; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div
+              style="font-size: 0.68rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 0.75rem; font-family: 'Fira Code', monospace;">
+              Engine Prompt Prefabs</div>
+            <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+              <button class="filter-chip"
+                onclick="document.getElementById('chatInput').value='Audit this test suite for critical missing edge cases and safety holes.'"
+                style="width: 100%; text-align: left; background: transparent; padding: 0.45rem 0.65rem; border-radius: 0.4rem; font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">
+                <i class="fas fa-shield-alt" style="color: #f43f5e; margin-right: 4px;"></i> Security Vulnerability
+                Audit
+              </button>
+              <button class="filter-chip"
+                onclick="document.getElementById('chatInput').value='Convert the last generated test specification array into a structured markdown action table.'"
+                style="width: 100%; text-align: left; background: transparent; padding: 0.45rem 0.65rem; border-radius: 0.4rem; font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">
+                <i class="fas fa-table" style="color: #a78bfa; margin-right: 4px;"></i> Convert Output to Table
+              </button>
+              <button class="filter-chip"
+                onclick="document.getElementById('chatInput').value='Generate stress test matrices and volume validation scripts for performance spikes.'"
+                style="width: 100%; text-align: left; background: transparent; padding: 0.45rem 0.65rem; border-radius: 0.4rem; font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">
+                <i class="fas fa-bolt" style="color: #eab308; margin-right: 4px;"></i> Scale Performance Checkups
+              </button>
+            </div>
+          </div>
+
+          <div style="border-top: 1px dashed #1e293b; padding-top: 0.75rem;">
+            <div
+              style="display: flex; justify-content: space-between; align-items: center; font-size: 0.65rem; font-family: 'Fira Code', monospace; color: #475569; margin-bottom: 0.25rem;">
+              <span>API Gateway:</span>
+              <span style="color: #10b981;"><i class="fas fa-check-circle"></i> Connected</span>
+            </div>
+            <div
+              style="display: flex; justify-content: space-between; align-items: center; font-size: 0.65rem; font-family: 'Fira Code', monospace; color: #475569;">
+              <span>Model Stream:</span>
+              <span style="color: #a78bfa;">DevQA F2.4</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+          <div id="chatMessages" class="chat-messages"
+            style="max-height: 290px; margin-bottom: 0; border: none; border-radius: 0; background: transparent; flex: 1; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem;">
+
+            <div
+              style="background: rgba(30, 41, 59, 0.3); border: 1px solid rgba(51, 65, 85, 0.4); border-radius: 0.5rem; padding: 0.75rem; font-family: system-ui, sans-serif;">
+              <h4
+                style="margin: 0 0 4px 0; font-size: 0.78rem; color: #f1f5f9; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-robot" style="color: #60a5fa;"></i> Interactive Core Instructions
+              </h4>
+              <p style="margin: 0; font-size: 0.72rem; color: #94a3b8; line-height: 1.4;">
+                Use this workspace to directly evaluate criteria bounds. Enter plain requirements description patterns,
+                paste test logs, or select a sidebar prefab utility chip to assemble systematic test matrices instantly.
+              </p>
+            </div>
+
+            <div class="chat-message bot"
+              style="max-width: 90%; background: rgba(30, 27, 75, 0.25); border: 1px solid rgba(139, 92, 246, 0.15); border-radius: 0.75rem; border-top-left-radius: 0.1rem; padding: 0.9rem 1.1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.15); margin-top: 0.25rem;">
+              <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 0.35rem;">
+                <span
+                  style="font-family: 'Fira Code', monospace; font-size: 0.7rem; font-weight: 700; color: #a78bfa; text-transform: uppercase; letter-spacing: 0.3px;">System
+                  Agent</span>
+                <span style="font-size: 0.6rem; color: #475569;">• Just now</span>
+              </div>
+              <div style="color: #cbd5e1; font-size: 0.85rem; line-height: 1.5;">
+                Hello QA engineer! Provide a functional blueprint, code blocks, or system requirements. I will
+                automatically design regression architectures, identify boundary risk constraints, and package
+                recommendations directly into clean testing matrices.
+              </div>
+            </div>
+
+          </div>
+
+          <div
+            style="display: flex; gap: 6px; flex-wrap: wrap; padding: 0.5rem 1.25rem; background: rgba(5, 8, 16, 0.5); border-top: 1px solid rgba(30, 41, 59, 0.5); align-items: center;">
+            <span
+              style="font-size: 0.65rem; font-weight: 700; color: #334155; font-family: 'Fira Code', monospace; text-transform: uppercase;">Shortcuts:</span>
+            <button class="filter-chip" onclick="document.getElementById('chatInput').value='/analyze '"
+              style="padding: 0.2rem 0.55rem; font-size: 0.68rem; font-family: 'Fira Code', monospace; background: #090d16; border-radius: 4px; color: #38bdf8;">/analyze</button>
+            <button class="filter-chip" onclick="document.getElementById('chatInput').value='/assert '"
+              style="padding: 0.2rem 0.55rem; font-size: 0.68rem; font-family: 'Fira Code', monospace; background: #090d16; border-radius: 4px; color: #10b981;">/assert</button>
+            <button class="filter-chip" onclick="document.getElementById('chatInput').value='/mock '"
+              style="padding: 0.2rem 0.55rem; font-size: 0.68rem; font-family: 'Fira Code', monospace; background: #090d16; border-radius: 4px; color: #eab308;">/mock</button>
+          </div>
+
+          <div class="chat-control"
+            style="padding: 1rem 1.25rem; background: #090d16; border-top: 1px solid rgba(30, 41, 59, 0.8); display: flex; gap: 0.75rem; align-items: center;">
+            <div style="position: relative; flex: 1;">
+              <input type="text" id="chatInput" class="form-control"
+                placeholder="Type a prompt or write commands (e.g., /analyze security tokens)..." autocomplete="off"
+                style="padding-left: 2.5rem; border-radius: 0.5rem; height: 46px; border-color: #1e293b; background: #05070c; font-size: 0.88rem;" />
+              <i class="fas fa-terminal"
+                style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #3b82f6; opacity: 0.7; font-size: 0.85rem;"></i>
+            </div>
+            <button id="chatSendBtn" class="btn-dev btn-primary-dev"
+              style="padding: 0 1.5rem; border-radius: 0.5rem; height: 46px; font-size: 0.85rem; letter-spacing: 0.5px; box-shadow: none; margin: 0;">
+              <span>EXECUTE</span> <i class="fas fa-angle-right" style="font-size: 0.9rem; margin-left: 2px;"></i>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <style>
+      @media (max-width: 768px) {
+        .hidden-mobile {
+          display: none !important;
+        }
+      }
+    </style>
+
+    <div id="qaDashboard" style="display: none;">
+      <div class="dev-card"
+        style="display: flex; flex-direction: column; overflow: hidden; padding: 0; margin: 1.5rem 0;">
+
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; background: linear-gradient(to right, rgba(15, 23, 42, 0.6), rgba(30, 41, 59, 0.3)); border-bottom: 1px solid rgba(51, 65, 85, 0.4); flex-wrap: wrap; gap: 0.75rem;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div
+              style="background: rgba(167, 139, 250, 0.1); width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(167, 139, 250, 0.25);">
+              <i class="fas fa-chart-pie" style="color: #a78bfa; font-size: 1rem;"></i>
+            </div>
+            <div>
+              <h3
+                style="color: #f8fafc; font-size: 0.95rem; font-weight: 700; font-family: 'Fira Code', monospace; margin: 0; letter-spacing: -0.2px;">
+                Quality Analytics Matrix
+              </h3>
+              <p style="color: #64748b; font-size: 0.72rem; margin: 0.15rem 0 0 0;">Real-time regression testing
+                vectors, execution weights, and test distribution scopes</p>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 0.65rem; font-family: 'Fira Code', monospace; color: #475569;">INDEXED_SUITES</span>
+            <span class="stat-badge-dev" id="totalTestCountSpan"
+              style="padding: 0.4rem 0.9rem; border-radius: 6px; font-weight: 700; background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.35); color: #38bdf8;">
+              0 tests
+            </span>
+          </div>
+        </div>
+
+        <div style="padding: 1.25rem; background: #070a12;">
+
+          <div
+            style="background: rgba(56, 189, 248, 0.03); border: 1px dashed rgba(56, 189, 248, 0.2); padding: 0.75rem 1rem; border-radius: 0.5rem; margin-bottom: 1rem; font-family: system-ui, -apple-system, sans-serif;">
+            <span
+              style="color: #38bdf8; font-family: 'Fira Code', monospace; font-size: 0.68rem; font-weight: 700; display: block; margin-bottom: 2px;">ANALYTICS
+              GUIDE:</span>
+            <p style="margin: 0; font-size: 0.72rem; color: #94a3b8; line-height: 1.4;">
+              This segment graphs real-time core health trends. Use the multi-select filter chips to cross-section
+              security, functional, or high-risk execution sets. Isolated segments will automatically compute and redraw
+              active charts instantly.
+            </p>
+          </div>
+          <div class="qa-dashboard"
+            style="margin-top: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+
+            <div class="chart-card"
+              style="background: #04060b; border-color: #1e293b; padding: 1rem; border-radius: 0.75rem; display: flex; flex-direction: column; justify-content: space-between;">
+              <div
+                style="font-size: 0.75rem; font-weight: 600; color: #60a5fa; font-family: 'Fira Code', monospace; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #1e293b; padding-bottom: 0.5rem; margin-bottom: 0.75rem;">
+                <i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i> Priority Distribution
+              </div>
+              <div
+                style="position: relative; flex: 1; display: flex; align-items: center; justify-content: center; min-height: 140px;">
+                <canvas id="priorityDonutChart" class="chart-canvas" style="max-height: 140px;"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card"
+              style="background: #04060b; border-color: #1e293b; padding: 1rem; border-radius: 0.75rem; display: flex; flex-direction: column; justify-content: space-between;">
+              <div
+                style="font-size: 0.75rem; font-weight: 600; color: #60a5fa; font-family: 'Fira Code', monospace; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #1e293b; padding-bottom: 0.5rem; margin-bottom: 0.75rem;">
+                <i class="fas fa-layer-group" style="color: #a78bfa;"></i> Test Type Coverage
+              </div>
+              <div
+                style="position: relative; flex: 1; display: flex; align-items: center; justify-content: center; min-height: 140px;">
+                <canvas id="typeDonutChart" class="chart-canvas" style="max-height: 140px;"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card"
+              style="background: #04060b; border-color: #1e293b; padding: 1rem; border-radius: 0.75rem; display: flex; flex-direction: column; justify-content: space-between; min-height: 180px;">
+              <div>
+                <div
+                  style="font-size: 0.75rem; font-weight: 600; color: #60a5fa; font-family: 'Fira Code', monospace; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #1e293b; padding-bottom: 0.5rem; margin-bottom: 0.75rem;">
+                  <i class="fas fa-filter" style="color: #34d399;"></i> Engine Context Filters
+                </div>
+
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                  <span class="filter-chip" data-filter-type="priority" data-filter-value="High"
+                    style="font-family: 'Fira Code', monospace; font-size: 0.7rem; border-radius: 4px;">🔴 High
+                    Risk</span>
+                  <span class="filter-chip" data-filter-type="priority" data-filter-value="Medium"
+                    style="font-family: 'Fira Code', monospace; font-size: 0.7rem; border-radius: 4px;">🟡 Medium</span>
+                  <span class="filter-chip" data-filter-type="priority" data-filter-value="Low"
+                    style="font-family: 'Fira Code', monospace; font-size: 0.7rem; border-radius: 4px;">🟢 Low</span>
+                  <span class="filter-chip" data-filter-type="type" data-filter-value="Security"
+                    style="font-family: 'Fira Code', monospace; font-size: 0.7rem; border-radius: 4px;">🔒
+                    Security</span>
+                  <span class="filter-chip" data-filter-type="type" data-filter-value="Functional"
+                    style="font-family: 'Fira Code', monospace; font-size: 0.7rem; border-radius: 4px;">⚙️
+                    Functional</span>
+                  <span class="filter-chip" data-filter-type="type" data-filter-value="Performance"
+                    style="font-family: 'Fira Code', monospace; font-size: 0.7rem; border-radius: 4px;">⚡
+                    Performance</span>
+                  <span class="filter-chip" data-filter-type="type" data-filter-value="Integration"
+                    style="font-family: 'Fira Code', monospace; font-size: 0.7rem; border-radius: 4px;">🔗
+                    Integration</span>
+                </div>
+              </div>
+
+              <div
+                style="margin-top: 1rem; border-top: 1px dashed rgba(51, 65, 85, 0.4); padding-top: 0.75rem; display: flex; justify-content: flex-end;">
+                <button id="clearFiltersBtn" class="btn-dev"
+                  style="padding: 0.35rem 0.85rem; font-size: 0.7rem; font-family: 'Fira Code', monospace; border-radius: 4px; border-color: rgba(255,255,255,0.04); background: rgba(51, 65, 85, 0.6);">
+                  <i class="fas fa-eraser" style="font-size: 0.65rem; color: #f43f5e;"></i> Clear Array
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <div id="activeFiltersBadge" class="filter-bar"
+            style="margin-bottom: 0; margin-top: 1rem; padding: 0.5rem 0.75rem; background: rgba(5, 8, 16, 0.4); border-radius: 6px; min-height: 32px; display: flex; flex-wrap: wrap; gap: 8px; border: 1px solid rgba(30, 41, 59, 0.5);">
+          </div>
+        </div>
+
       </div>
     </div>
 
     <div id="outputArea">
-      <div class="dev-card empty-state" style="padding: 2rem;">
-        <i class="fas fa-code" style="font-size: 2rem; opacity: 0.5;"></i>
-        <p style="margin-top: 1rem;">No test cases generated yet.<br>Enter features above and click GENERATE TEST SUITE
+      <div class="dev-card empty-state"
+        style="padding: 3rem 2rem; text-align: center; margin-top: 1.5rem; background: radial-gradient(circle at center, #090d16 0%, #05070c 100%); border: 1px dashed rgba(148, 163, 184, 0.15); border-radius: 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 240px;">
+        <div
+          style="background: rgba(30, 41, 59, 0.4); width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.03); margin-bottom: 1.25rem; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
+          <i class="fas fa-code" style="font-size: 1.75rem; color: #475569; opacity: 0.85;"></i>
+        </div>
+        <h4
+          style="color: #f1f5f9; font-size: 0.95rem; font-family: 'Fira Code', monospace; margin: 0 0 0.5rem 0; font-weight: 600;">
+          No test cases generated yet</h4>
+        <p style="margin: 0 0 1rem 0; color: #64748b; font-size: 0.8rem; line-height: 1.5; max-width: 380px;">
+          Provide structural functional rules in the manifest editor above or run live connection scans to instantiate
+          your automation array vectors.
         </p>
+
+        <div
+          style="max-width: 420px; background: rgba(167, 139, 250, 0.03); border: 1px solid rgba(167, 139, 250, 0.12); border-radius: 8px; padding: 0.65rem 0.85rem; text-align: left; font-family: system-ui, -apple-system, sans-serif;">
+          <span
+            style="color: #a78bfa; font-family: 'Fira Code', monospace; font-size: 0.65rem; font-weight: 700; display: block; margin-bottom: 3px; letter-spacing: 0.5px;"><i
+              class="fas fa-info-circle"></i> QUICK INITIALIZATION WORKFLOW:</span>
+          <ol style="margin: 0; padding-left: 1.1rem; color: #94a3b8; font-size: 0.72rem; line-height: 1.4;">
+            <li>Input raw architectural specifications or setup your target schema parameters above.</li>
+            <li>Press <strong style="color: #cbd5e1;">Analyze Specification</strong> or execute a message command string
+              inside the engine core.</li>
+            <li>Review compiled assertion profiles directly within this viewport once processing ends.</li>
+          </ol>
+        </div>
       </div>
     </div>
 
-    <!-- Feedback Form Section -->
-    <div class="dev-card feedback-section" style="padding: 0; margin-top: 1.5rem;">
-      <div class="feedback-header">
-        <i class="fas fa-comment-dots" style="color: #c084fc;"></i>
-        <span style="color: #c084fc; font-weight: 600; margin-left: 8px;">Share Your Experience</span>
-        <span
-          style="font-size: 0.65rem; background: #2d1b4e; padding: 2px 8px; border-radius: 20px; margin-left: 10px;">Help
-          us improve</span>
-      </div>
-      <div style="padding: 1.2rem;">
-        <div class="form-group">
-          <label><i class="fas fa-user"></i> Your Name</label>
-          <input type="text" id="feedbackName" class="form-control" placeholder="Enter your name" maxlength="100">
-        </div>
-        <div class="form-group">
-          <label><i class="fas fa-envelope"></i> Email Address</label>
-          <input type="email" id="feedbackEmail" class="form-control" placeholder="your@email.com"
-            value="skbharath2006@gmail.com">
-          <small style="color: #6b7280; font-size: 0.65rem;">Your feedback will be sent to
-            skbharath2006@gmail.com</small>
-        </div>
-        <div class="form-group">
-          <label><i class="fas fa-star"></i> Rating (1-5)</label>
-          <div class="rating-stars" id="ratingStars">
-            <i class="fas fa-star star" data-rating="1"></i>
-            <i class="fas fa-star star" data-rating="2"></i>
-            <i class="fas fa-star star" data-rating="3"></i>
-            <i class="fas fa-star star" data-rating="4"></i>
-            <i class="fas fa-star star" data-rating="5"></i>
+    <div class="dev-card feedback-section"
+      style="padding: 0; margin-top: 1.5rem; border-radius: 1.25rem; overflow: hidden; display: flex; flex-direction: column;">
+
+      <div class="feedback-header"
+        style="padding: 1.1rem 1.25rem; background: linear-gradient(to right, #1e1b4b, #110e2e); border-bottom: 1px solid rgba(192, 132, 252, 0.15); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div
+            style="background: rgba(192, 132, 252, 0.12); width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(192, 132, 252, 0.25);">
+            <i class="fas fa-comment-dots" style="color: #c084fc; font-size: 0.95rem;"></i>
           </div>
-          <input type="hidden" id="feedbackRating" value="0">
+          <div>
+            <span
+              style="color: #f8fafc; font-size: 0.9rem; font-weight: 700; font-family: 'Fira Code', monospace; letter-spacing: -0.2px;">Share
+              Your Experience</span>
+            <span
+              style="font-size: 0.625rem; font-weight: 600; text-transform: uppercase; background: rgba(192, 132, 252, 0.15); color: #c084fc; padding: 2px 8px; border-radius: 4px; margin-left: 10px; border: 1px solid rgba(192, 132, 252, 0.2);">Telemetry
+              Tuner</span>
+          </div>
         </div>
-        <div class="form-group">
-          <label><i class="fas fa-comment"></i> Your Feedback / Suggestions</label>
+        <span style="font-size: 0.72rem; color: #94a3b8; font-family: 'Inter', sans-serif;">Help us optimize production
+          generation</span>
+      </div>
+
+      <div style="padding: 1.5rem; background: #070a12; display: flex; flex-direction: column; gap: 1.25rem;">
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="feedbackName"
+              style="display: block; margin-bottom: 0.5rem; font-size: 0.78rem; font-family: 'Fira Code', monospace; color: #94a3b8; font-weight: 600;">
+              <i class="fas fa-user" style="color: #475569; font-size: 0.75rem; margin-right: 4px;"></i> Operator Name
+            </label>
+            <input type="text" id="feedbackName" class="form-control" placeholder="Enter your identifier name"
+              maxlength="100"
+              style="background: #04060b; border-color: #1e293b; border-radius: 0.5rem; height: 42px; font-size: 0.85rem;" />
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="feedbackEmail"
+              style="display: block; margin-bottom: 0.5rem; font-size: 0.78rem; font-family: 'Fira Code', monospace; color: #94a3b8; font-weight: 600;">
+              <i class="fas fa-envelope" style="color: #475569; font-size: 0.75rem; margin-right: 4px;"></i> Dispatch
+              Email Destination
+            </label>
+            <input type="email" id="feedbackEmail" class="form-control" placeholder="your@email.com"
+              value="skbharath2006@gmail.com"
+              style="background: #04060b; border-color: #1e293b; border-radius: 0.5rem; height: 42px; font-size: 0.85rem; color: #cbd5e1;" />
+          </div>
+        </div>
+
+        <div
+          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; align-items: end;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label
+              style="display: block; margin-bottom: 0.65rem; font-size: 0.78rem; font-family: 'Fira Code', monospace; color: #94a3b8; font-weight: 600;">
+              <i class="fas fa-star" style="color: #eab308; font-size: 0.75rem; margin-right: 4px;"></i> Core Workspace
+              Rating
+            </label>
+            <div class="rating-stars" id="ratingStars"
+              style="display: flex; gap: 8px; color: #334155; cursor: pointer; font-size: 1.25rem; background: #04060b; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid #1e293b; width: fit-content; transition: color 0.2s;">
+              <i class="fas fa-star star" data-rating="1"></i>
+              <i class="fas fa-star star" data-rating="2"></i>
+              <i class="fas fa-star star" data-rating="3"></i>
+              <i class="fas fa-star star" data-rating="4"></i>
+              <i class="fas fa-star star" data-rating="5"></i>
+            </div>
+            <input type="hidden" id="feedbackRating" value="0" />
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="feedbackTestCount"
+              style="display: block; margin-bottom: 0.5rem; font-size: 0.78rem; font-family: 'Fira Code', monospace; color: #94a3b8; font-weight: 600;">
+              <i class="fas fa-chart-bar" style="color: #60a5fa; font-size: 0.75rem; margin-right: 4px;"></i> Test Cases
+              Logged (Auto-filled)
+            </label>
+            <input type="text" id="feedbackTestCount" class="form-control" readonly
+              placeholder="Awaiting dataset aggregation..."
+              style="background: #04060b; border-color: #1e293b; border-radius: 0.5rem; height: 42px; font-size: 0.825rem; font-family: 'Fira Code', monospace; color: #64748b;" />
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="feedbackMessage"
+            style="display: block; margin-bottom: 0.5rem; font-size: 0.78rem; font-family: 'Fira Code', monospace; color: #94a3b8; font-weight: 600;">
+            <i class="fas fa-comment" style="color: #475569; font-size: 0.75rem; margin-right: 4px;"></i>
+            Recommendations & Bug Vectors
+          </label>
           <textarea id="feedbackMessage" class="form-control" rows="3"
-            placeholder="What do you like? What can we improve? Bug reports, feature requests, or general feedback..."></textarea>
+            placeholder="What parts of the testing pipeline excel? Document custom component request updates, visual defects or logic optimization flaws..."
+            style="background: #04060b; border-color: #1e293b; border-radius: 0.5rem; padding: 0.75rem; font-size: 0.88rem; line-height: 1.5; resize: vertical;"></textarea>
         </div>
-        <div class="form-group">
-          <label><i class="fas fa-chart-bar"></i> Test Cases Generated (Auto-filled)</label>
-          <input type="text" id="feedbackTestCount" class="form-control" readonly
-            placeholder="Will auto-fill after generation" style="background: #0a0e14;">
+
+        <div class="feedback-preview" id="feedbackPreview"
+          style="padding: 0.75rem 1rem; background: rgba(5, 8, 16, 0.6); border-radius: 0.5rem; font-size: 0.75rem; font-family: 'Fira Code', monospace; color: #64748b; border: 1px dashed #1e293b; display: flex; align-items: center; gap: 8px;">
+          <i class="fas fa-eye" style="color: #3b82f6; opacity: 0.8;"></i> <span>Preview Stream // Construct data array
+            matrix above to compile your context view summary</span>
         </div>
-        <div class="feedback-preview" id="feedbackPreview">
-          <i class="fas fa-eye"></i> Preview: Fill the form to see your feedback summary
+
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-top: 0.5rem; border-top: 1px dashed #1e293b; padding-top: 1.25rem;">
+          <small
+            style="color: #475569; font-size: 0.68rem; font-family: 'Fira Code', monospace; max-width: 280px; line-height: 1.4;">
+            <i class="fas fa-info-circle"></i> Pipeline payload target routes auto-forward data blocks directly to:
+            skbharath2006@gmail.com
+          </small>
+
+          <div class="btn-group" style="margin-top: 0; gap: 0.5rem;">
+            <button id="sendFeedbackBtn" class="btn-dev btn-orange-dev"
+              style="padding: 0.65rem 1.4rem; border-radius: 0.5rem; font-size: 0.825rem; font-weight: 700; letter-spacing: 0.2px;">
+              <i class="fas fa-paper-plane" style="font-size: 0.75rem;"></i> SEND FEEDBACK TO EMAIL
+            </button>
+            <button id="resetFeedbackBtn" class="btn-dev"
+              style="padding: 0.65rem 1.1rem; border-radius: 0.5rem; font-size: 0.825rem; background: rgba(51, 65, 85, 0.4); border-color: rgba(255,255,255,0.02); color: #94a3b8;">
+              <i class="fas fa-undo-alt"></i> Reset
+            </button>
+          </div>
         </div>
-        <div class="btn-group" style="margin-top: 0.8rem;">
-          <button id="sendFeedbackBtn" class="btn-dev btn-orange-dev"><i class="fas fa-paper-plane"></i> SEND FEEDBACK
-            TO EMAIL</button>
-          <button id="resetFeedbackBtn" class="btn-dev" style="background:#334155;"><i class="fas fa-undo-alt"></i>
-            Reset Form</button>
-        </div>
+
       </div>
     </div>
 
-    <footer>// QA test types per feature • Priority-based risk assessment • Interactive analytics • Your feedback
-      matters</footer>
+    <footer
+      style="margin-top: 2rem; text-align: center; color: #4b5563; font-size: 0.75rem; border-top: 1px solid #1e293b; padding-top: 1rem;">
+      // QA test types per feature • Priority-based risk assessment • Interactive analytics • Your feedback matters
+    </footer>
   </div>
 
-  <script>
-    let currentTests = [];
-    let currentFeatureList = [];
-    let stepInterval = null;
-    let activeStep = -1;
-    let chartRef = null;
-    let priorityChart = null, typeChart = null;
-    let activePriorityFilter = null;
-    let activeTypeFilter = null;
-    let currentRating = 0;
-    let outputMode = 'cards';
-    let chatHistory = [];
-
-    const pipelineSteps = [
-      { id: 1, name: "PARSE", desc: "Extract features", icon: "fa-code" },
-      { id: 2, name: "VALIDATE", desc: "Verify inputs", icon: "fa-check-circle" },
-      { id: 3, name: "ANALYZE", desc: "AI processing", icon: "fa-brain" },
-      { id: 4, name: "GENERATE", desc: "QA test types/feature", icon: "fa-layer-group" },
-      { id: 5, name: "PRIORITIZE", desc: "Risk assessment", icon: "fa-chart-line" },
-      { id: 6, name: "BUILD", desc: "Test case assembly", icon: "fa-file-alt" },
-      { id: 7, name: "VISUALIZE", desc: "Dashboard ready", icon: "fa-chart-pie" }
-    ];
-
-    function showToast(message, type = "success") {
-      const toast = document.createElement("div");
-      toast.className = `toast-notification ${type}`;
-      toast.innerHTML = `<i class="fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i> ${message}`;
-      document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 4000);
-    }
-
-    function extractFeaturesFromText(text) {
-      if (!text || !text.trim()) return [];
-      let lines = text.split(/\r?\n/);
-      let features = [];
-      for (let line of lines) {
-        line = line.trim();
-        if (!line) continue;
-        if (line.startsWith("-") || line.startsWith("*") || line.startsWith("•")) {
-          let clean = line.substring(1).trim();
-          if (clean && clean.length > 1) features.push(clean);
-        } else if (line.includes(":")) {
-          let after = line.split(":")[1];
-          if (after) {
-            after.split(",").forEach(p => { let f = p.trim(); if (f && f.length > 1) features.push(f); });
-          } else if (line.length > 3 && line.length < 100) {
-            features.push(line);
-          }
-        } else if (line.length > 2 && line.length < 80 && !line.match(/^\d+\./)) {
-          features.push(line);
-        }
-      }
-      if (features.length === 0 && text.trim().length > 3) {
-        let potential = text.trim().split(/[,.\n]/).filter(s => s.trim().length > 2).slice(0, 5);
-        features = potential;
-      }
-      let seen = new Set();
-      let unique = [];
-      for (let f of features) {
-        let low = f.toLowerCase().substring(0, 60);
-        if (!seen.has(low) && f.length > 1) { seen.add(low); unique.push(f.substring(0, 55)); }
-      }
-      return unique.slice(0, 10);
-    }
-
-    function generateTestSuite(features) {
-      let tests = [];
-      let id = 1;
-      for (let feat of features) {
-        if (!feat || feat.length < 1) continue;
-        tests.push(createTC(id++, feat, "Functional", "High", [`Initialize test environment`, `Navigate to "${feat}" module`, `Execute valid operation`, `Validate expected response`], `${feat} works correctly under normal conditions.`));
-        tests.push(createTC(id++, feat, "Negative", "Medium", [`Access ${feat} endpoint`, `Inject invalid/malformed payloads`, `Trigger error handler`, `Verify graceful degradation`], `System handles errors gracefully, no crash or data corruption.`));
-        tests.push(createTC(id++, feat, "Edge Case", "Medium", [`Apply boundary value analysis`, `Test with max/min constraints`, `Verify extreme inputs`], `Boundary conditions are handled properly without failures.`));
-        tests.push(createTC(id++, feat, "Security", "High", [`Attempt SQL injection attack`, `Test XSS vector injection`, `Try authentication bypass`, `Validate access controls`], `All malicious inputs sanitized, unauthorized access denied.`));
-        tests.push(createTC(id++, feat, "UI/UX", "Low", [`Check responsive layout`, `Test keyboard navigation`, `Perform visual regression`], `UI matches design specifications, fully accessible.`));
-        tests.push(createTC(id++, feat, "Integration", "High", [`Trigger API endpoint`, `Verify database state`, `Check event logs/message queue`, `Validate end-to-end flow`], `All integrated components work together correctly.`));
-        tests.push(createTC(id++, feat, "Performance", "Medium", [`Simulate 100 concurrent users`, `Measure response time`, `Monitor resource usage`], `Response time under 1.5 seconds under load.`));
-        tests.push(createTC(id++, feat, "Accessibility", "Low", [`Run automated a11y scan`, `Test screen reader compatibility`, `Check color contrast`], `WCAG 2.1 AA compliance achieved.`));
-        tests.push(createTC(id++, feat, "Localization", "Medium", [`Switch to different locale`, `Verify date/time formats`, `Check currency display`, `Validate translated strings`], `i18n works correctly across all supported locales.`));
-      }
-      return tests;
-    }
-
-    function createTC(id, feature, type, priority, steps, expected) {
-      return { id: `TC_${String(id).padStart(3, "0")}`, title: `${type} validation: ${feature.substring(0, 50)}`, priority, type, steps, expected_result: expected, featureRef: feature };
-    }
-
-    function renderSteps(activeIdx = -1) {
-      const container = document.getElementById("stepContainer");
-      let html = `<div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; align-items: center;">`;
-      pipelineSteps.forEach((step, idx) => {
-        const isActive = (idx === activeIdx);
-        html += `<div class="step-node-dev ${isActive ? 'active' : ''}"><div class="step-num"><i class="fas ${step.icon}"></i> ${step.id}</div><div class="step-name">${step.name}</div><div class="step-desc">${step.desc}</div></div>`;
-        if (idx < pipelineSteps.length - 1) html += `<div class="arrow-icon"><i class="fas fa-chevron-right"></i></div>`;
-      });
-      html += `</div>`;
-      container.innerHTML = html;
-      updatePipelineChart(activeIdx);
-    }
-
-    function updatePipelineChart(activeIdx) {
-      const canvas = document.getElementById("pipelineChart");
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      const intensities = pipelineSteps.map((_, idx) => (activeIdx >= idx) ? 8 : 2);
-      if (chartRef) chartRef.destroy();
-      chartRef = new Chart(ctx, {
-        type: 'line',
-        data: { labels: pipelineSteps.map(s => s.name), datasets: [{ label: 'Pipeline Progress', data: intensities, borderColor: '#60a5fa', backgroundColor: 'rgba(96, 165, 250, 0.15)', fill: true, tension: 0.3, pointBackgroundColor: '#fbbf24' }] },
-        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 9 } } } }, scales: { y: { min: 0, max: 10, ticks: { color: '#64748b' } }, x: { ticks: { color: '#94a3b8', font: { size: 8 } } } } }
-      });
-    }
-
-    function animatePipeline(totalFeatures, totalTests) {
-      return new Promise((resolve) => {
-        if (stepInterval) clearInterval(stepInterval);
-        activeStep = -1;
-        const stepDelay = 500;
-        function advanceStep() {
-          activeStep++;
-          if (activeStep < pipelineSteps.length) {
-            renderSteps(activeStep);
-            const statusDiv = document.getElementById("pipelineStatus");
-            if (statusDiv) {
-              let msg = `⚡ STEP ${activeStep + 1}: ${pipelineSteps[activeStep].name} — ${pipelineSteps[activeStep].desc}`;
-              if (activeStep === 3) msg += ` (${totalTests} tests from ${totalFeatures} features)`;
-              if (activeStep === pipelineSteps.length - 1) msg = `✅ GENERATION COMPLETE — ${totalTests} test cases ready. Use filters to explore.`;
-              statusDiv.innerHTML = `<i class="fas fa-microchip"></i> ${msg}`;
-            }
-            if (activeStep === pipelineSteps.length - 1) {
-              clearInterval(stepInterval);
-              setTimeout(() => resolve(), 400);
-            }
-          } else {
-            clearInterval(stepInterval);
-            resolve();
-          }
-        }
-        advanceStep();
-        stepInterval = setInterval(advanceStep, stepDelay);
-      });
-    }
-
-    // FIXED FILTER FUNCTION: properly handles priority & type filters simultaneously
-    function renderFilteredTests() {
-      let filtered = [...currentTests];
-      if (activePriorityFilter) filtered = filtered.filter(t => t.priority === activePriorityFilter);
-      if (activeTypeFilter) filtered = filtered.filter(t => t.type === activeTypeFilter);
-      renderTestOutput(filtered);
-      updateDonutChartsWithFilteredView(filtered);
-      const totalSpan = document.getElementById("totalTestCountSpan");
-      if (totalSpan) totalSpan.innerHTML = `${filtered.length} / ${currentTests.length} tests`;
-      const badgeDiv = document.getElementById("activeFiltersBadge");
-      let filtersHtml = [];
-      if (activePriorityFilter) filtersHtml.push(`<span class="stat-badge-dev" style="background:#3b82f6;">Priority: ${activePriorityFilter}</span>`);
-      if (activeTypeFilter) filtersHtml.push(`<span class="stat-badge-dev" style="background:#a855f7;">Type: ${activeTypeFilter}</span>`);
-      badgeDiv.innerHTML = filtersHtml.length ? `<i class="fas fa-filter"></i> Active filters: ${filtersHtml.join(' ')}` : `<i class="fas fa-sliders-h"></i> No active filters - showing all ${currentTests.length} tests`;
-      const feedbackCountField = document.getElementById("feedbackTestCount");
-      if (feedbackCountField) feedbackCountField.value = currentTests.length > 0 ? `${currentTests.length} test cases generated` : "No tests yet";
-    }
-
-    function updateDonutChartsWithFilteredView(filteredTests) {
-      const priorityCounts = { High: 0, Medium: 0, Low: 0 };
-      const typeMap = new Map();
-      filteredTests.forEach(t => { priorityCounts[t.priority]++; typeMap.set(t.type, (typeMap.get(t.type) || 0) + 1); });
-      const priorityCtx = document.getElementById("priorityDonurChart") || document.getElementById("priorityDonutChart");
-      const typeCtx = document.getElementById("typeDonutChart");
-      if (priorityChart) priorityChart.destroy();
-      if (typeChart) typeChart.destroy();
-      if (priorityCtx && priorityCtx.id === "priorityDonutChart") {
-        priorityChart = new Chart(priorityCtx, { type: 'doughnut', data: { labels: ['High Risk', 'Medium Risk', 'Low Risk'], datasets: [{ data: [priorityCounts.High, priorityCounts.Medium, priorityCounts.Low], backgroundColor: ['#dc2626', '#f59e0b', '#10b981'] }] }, options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e6', font: { size: 9 } } } } } });
-      }
-      if (typeCtx) {
-        typeChart = new Chart(typeCtx, { type: 'doughnut', data: { labels: Array.from(typeMap.keys()), datasets: [{ data: Array.from(typeMap.values()), backgroundColor: ['#3b82f6', '#a855f7', '#ec489a', '#14b8a6', '#f97316', '#8b5cf6', '#06b6d4', '#84cc16', '#d946ef'] }] }, options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e6', font: { size: 8 } } } } } });
-      }
-    }
-
-    function renderTestOutput(tests) {
-      const outputDiv = document.getElementById("outputArea");
-      if (!tests || tests.length === 0) { outputDiv.innerHTML = `<div class="dev-card empty-state" style="padding: 2rem;"><i class="fas fa-filter" style="font-size: 2rem; opacity: 0.5;"></i><p style="margin-top: 1rem;">No test cases match the selected filters.</p></div>`; return; }
-      const prioCount = { High: 0, Medium: 0, Low: 0 };
-      const typeMap = new Map();
-      tests.forEach(t => { prioCount[t.priority]++; typeMap.set(t.type, (typeMap.get(t.type) || 0) + 1); });
-      let statsHtml = `<div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 1rem;"><div class="stat-badge-dev"><i class="fas fa-cubes"></i> Features: ${currentFeatureList.length}</div><div class="stat-badge-dev"><i class="fas fa-vial"></i> Showing: ${tests.length} / ${currentTests.length}</div><div class="stat-badge-dev"><i class="fas fa-chart-simple"></i> 🔴${prioCount.High} 🟡${prioCount.Medium} 🟢${prioCount.Low}</div><button id="toggleTableViewBtn" class="btn-dev btn-orange-dev" style="margin-left:auto;">${outputMode === 'table' ? 'Show Cards' : 'Show Table'}</button></div><div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1rem;">${Array.from(typeMap.entries()).map(([type, cnt]) => `<span class="stat-badge-dev"><i class="fas fa-tag"></i> ${type}: ${cnt}</span>`).join('')}</div>`;
-      let contentHtml = "";
-      if (outputMode === 'table') {
-        contentHtml += `<div class="dev-card" style="padding:1rem; overflow-x:auto;">
-        <table class="qa-table"><thead><tr><th>ID</th><th>Feature</th><th>Type</th><th>Priority</th><th>Steps</th><th>Actions</th></tr></thead><tbody>`;
-        tests.forEach(tc => {
-          const stepsSummary = tc.steps.join(' • ');
-          contentHtml += `<tr><td>${tc.id}</td><td>${tc.featureRef}</td><td>${tc.type}</td><td>${tc.priority}</td><td>${stepsSummary}</td><td><button class="btn-dev action-btn" onclick="copyTestSteps('${tc.id}')">Copy Steps</button><button class="btn-dev action-btn" onclick="askAboutTest('${tc.id}')">Ask QA Chat</button></td></tr>`;
-        });
-        contentHtml += `</tbody></table></div>`;
-      } else {
-        let cardsHtml = "";
-        tests.forEach(tc => {
-          const priorityClass = tc.priority === "High" ? "priority-high" : (tc.priority === "Medium" ? "priority-med" : "priority-low");
-          cardsHtml += `<div class="test-card-dev"><div style="display: flex; justify-content: space-between;"><span><strong style="color:#60a5fa;">${tc.id}</strong> <span class="priority-tag ${priorityClass}">${tc.priority}</span> <span style="background:#1e293b;padding:2px 8px;border-radius:12px;color:#a78bfa;">${tc.type}</span></span></div><p><span style="color:#a78bfa;">▸ Feature:</span> ${tc.featureRef}</p><p><span style="color:#a78bfa;">▸ Scenario:</span> ${tc.title}</p><details><summary>📋 Expand steps & expected</summary><ul>${tc.steps.map(s => `<li style="margin-left:1.2rem;font-size:0.75rem;"><i class="fas fa-angle-right" style="color:#60a5fa;"></i> ${s}</li>`).join('')}</ul><p><span style="color:#34d399;">✓ Expected:</span> ${tc.expected_result}</p></details></div>`;
-        });
-        contentHtml = cardsHtml;
-      }
-      outputDiv.innerHTML = statsHtml + contentHtml;
-      const toggleBtn = document.getElementById('toggleTableViewBtn');
-      if (toggleBtn) toggleBtn.addEventListener('click', toggleOutputMode);
-      if (outputMode !== 'table') {
-        const cards = Array.from(document.querySelectorAll("#outputArea .test-card-dev"));
-        cards.forEach(c => { c.classList.add('stagger-hidden'); setTimeout(() => { c.classList.remove('stagger-hidden'); c.classList.add('stagger-visible'); }, 50); });
-      }
-    }
-
-    // FILTER EVENT HANDLERS (FIXED)
-    function attachFilterEvents() {
-      const chips = document.querySelectorAll('.filter-chip');
-      chips.forEach(chip => {
-        chip.removeEventListener('click', handleFilterClick);
-        chip.addEventListener('click', handleFilterClick);
-      });
-    }
-
-    function handleFilterClick(e) {
-      const chip = e.currentTarget;
-      const filterType = chip.getAttribute('data-filter-type');
-      const filterValue = chip.getAttribute('data-filter-value');
-      if (filterType === 'priority') {
-        if (activePriorityFilter === filterValue) {
-          activePriorityFilter = null;
-        } else {
-          activePriorityFilter = filterValue;
-        }
-      } else if (filterType === 'type') {
-        if (activeTypeFilter === filterValue) {
-          activeTypeFilter = null;
-        } else {
-          activeTypeFilter = filterValue;
-        }
-      }
-      // Update UI active class
-      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active-filter'));
-      if (activePriorityFilter) {
-        document.querySelectorAll(`.filter-chip[data-filter-type="priority"][data-filter-value="${activePriorityFilter}"]`).forEach(c => c.classList.add('active-filter'));
-      }
-      if (activeTypeFilter) {
-        document.querySelectorAll(`.filter-chip[data-filter-type="type"][data-filter-value="${activeTypeFilter}"]`).forEach(c => c.classList.add('active-filter'));
-      }
-      renderFilteredTests();
-    }
-
-    function clearFilters() {
-      activePriorityFilter = null;
-      activeTypeFilter = null;
-      document.querySelectorAll('.filter-chip').forEach(chip => chip.classList.remove('active-filter'));
-      renderFilteredTests();
-      showToast("Filters cleared", "success");
-    }
-
-    // Feedback Functions
-    function initRatingStars() {
-      const stars = document.querySelectorAll('.star');
-      stars.forEach(star => {
-        star.addEventListener('click', function () {
-          const rating = parseInt(this.getAttribute('data-rating'));
-          currentRating = rating;
-          document.getElementById('feedbackRating').value = rating;
-          stars.forEach((s, idx) => {
-            if (idx < rating) s.classList.add('active');
-            else s.classList.remove('active');
-          });
-          updateFeedbackPreview();
-        });
-      });
-    }
-
-    function updateFeedbackPreview() {
-      const name = document.getElementById('feedbackName').value || '[Not provided]';
-      const email = document.getElementById('feedbackEmail').value || '[Not provided]';
-      const rating = currentRating > 0 ? currentRating : 'Not rated';
-      const message = document.getElementById('feedbackMessage').value || '[No message]';
-      const testCount = document.getElementById('feedbackTestCount').value || 'No tests generated';
-      const previewDiv = document.getElementById('feedbackPreview');
-      previewDiv.innerHTML = `<i class="fas fa-eye"></i> <strong>Feedback Preview:</strong><br>
-    📛 Name: ${name}<br>
-    📧 Email: ${email}<br>
-    ⭐ Rating: ${rating}/5<br>
-    🧪 ${testCount}<br>
-    💬 Message: ${message.substring(0, 100)}${message.length > 100 ? '...' : ''}`;
-    }
-
-    function sendFeedbackToEmail() {
-      const name = document.getElementById('feedbackName').value.trim();
-      const email = document.getElementById('feedbackEmail').value.trim();
-      const rating = currentRating;
-      const message = document.getElementById('feedbackMessage').value.trim();
-      const testCount = document.getElementById('feedbackTestCount').value || 'No tests generated';
-
-      if (!name) { showToast("Please enter your name", "error"); document.getElementById('feedbackName').classList.add('error-input'); setTimeout(() => document.getElementById('feedbackName').classList.remove('error-input'), 2000); return; }
-      if (!email) { showToast("Please enter your email", "error"); document.getElementById('feedbackEmail').classList.add('error-input'); setTimeout(() => document.getElementById('feedbackEmail').classList.remove('error-input'), 2000); return; }
-      if (!email.includes('@') || !email.includes('.')) { showToast("Please enter a valid email address", "error"); return; }
-      if (rating === 0) { showToast("Please select a rating (1-5 stars)", "error"); return; }
-      if (!message) { showToast("Please enter your feedback message", "error"); document.getElementById('feedbackMessage').classList.add('error-input'); setTimeout(() => document.getElementById('feedbackMessage').classList.remove('error-input'), 2000); return; }
-      const subject = encodeURIComponent(`DevQA Forge Feedback from ${name}`);
-      const body = encodeURIComponent(`===========================================\nDEVQA FORGE FEEDBACK FORM\n===========================================\n\n📅 Date: ${new Date().toLocaleString()}\n\n👤 Name: ${name}\n📧 Email: ${email}\n⭐ Rating: ${rating}/5\n🧪 Test Status: ${testCount}\n\n💬 Message:\n${message}\n\n===========================================\nThank you for helping us improve DevQA Forge!`);
-      window.location.href = `mailto:skbharath2006@gmail.com?subject=${subject}&body=${body}`;
-      showToast("Opening your email client with pre-filled feedback template!", "success");
-    }
-
-    function resetFeedbackForm() {
-      document.getElementById('feedbackName').value = '';
-      document.getElementById('feedbackEmail').value = 'skbharath2006@gmail.com';
-      document.getElementById('feedbackMessage').value = '';
-      currentRating = 0;
-      document.getElementById('feedbackRating').value = 0;
-      const stars = document.querySelectorAll('.star');
-      stars.forEach(star => star.classList.remove('active'));
-      updateFeedbackPreview();
-      showToast("Feedback form reset", "success");
-    }
-
-    async function runFullPipeline() {
-      const raw = document.getElementById("reqInput").value;
-      if (!raw.trim()) { showToast("Please enter feature requirements first.", "error"); return; }
-      const features = extractFeaturesFromText(raw);
-      if (features.length === 0) { showToast("No valid features detected. Use bullet points (- Feature) or comma-separated list.", "error"); return; }
-      currentFeatureList = features;
-      currentTests = generateTestSuite(features);
-      activePriorityFilter = null; activeTypeFilter = null;
-      document.querySelectorAll('.filter-chip').forEach(chip => chip.classList.remove('active-filter'));
-      document.getElementById("pipelineVisual").style.display = "block";
-      document.getElementById("qaDashboard").style.display = "none";
-      renderSteps(-1);
-      await animatePipeline(currentFeatureList.length, currentTests.length);
-      document.getElementById("qaDashboard").style.display = "block";
-      renderFilteredTests();  // Fixed: uses renderFilteredTests to sync everything
-      showToast(`Success! Generated ${currentTests.length} test cases.`, "success");
-    }
-
-    async function exportPDF() {
-      if (!currentTests.length) { showToast("No test cases to export. Generate a test suite first.", "warning"); return; }
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-      doc.setFillColor(18, 22, 45); doc.rect(0, 0, 210, 35, 'F');
-      doc.setTextColor(96, 165, 250); doc.setFontSize(20); doc.setFont("helvetica", "bold"); doc.text("DevQA Forge - Test Report", 20, 18);
-      doc.setFontSize(9); doc.setTextColor(156, 163, 175); doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 28); doc.text(`Total: ${currentTests.length}`, 140, 28);
-      const featuresCount = new Set(currentTests.map(t => t.featureRef)).size;
-      const highCount = currentTests.filter(t => t.priority === "High").length;
-      const medCount = currentTests.filter(t => t.priority === "Medium").length;
-      const lowCount = currentTests.filter(t => t.priority === "Low").length;
-      doc.setFillColor(30, 35, 55); doc.roundedRect(20, 40, 170, 25, 3, 3, 'F');
-      doc.setTextColor(96, 165, 250); doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.text("SUMMARY", 25, 48);
-      doc.setTextColor(203, 213, 225); doc.setFontSize(9); doc.setFont("helvetica", "normal");
-      doc.text(`Features: ${featuresCount}`, 25, 56); doc.text(`High Priority: ${highCount}`, 80, 56); doc.text(`Medium: ${medCount}`, 130, 56); doc.text(`Low: ${lowCount}`, 170, 56);
-      let y = 78;
-      for (let i = 0; i < currentTests.length; i++) {
-        const tc = currentTests[i];
-        if (y > 270) { doc.addPage(); y = 20; doc.setFillColor(18, 22, 45); doc.rect(0, 0, 210, 25, 'F'); doc.setTextColor(96, 165, 250); doc.setFontSize(14); doc.setFont("helvetica", "bold"); doc.text("DevQA Forge - Test Report (continued)", 20, 16); y = 32; }
-        doc.setFillColor(25, 30, 45); doc.roundedRect(15, y - 2, 180, 30, 2, 2, 'F');
-        doc.setFontSize(8); doc.setFont("helvetica", "bold"); doc.setTextColor(96, 165, 250); doc.text(`${tc.id}`, 20, y + 4);
-        let priorityColor = tc.priority === "High" ? [220, 38, 38] : (tc.priority === "Medium" ? [245, 158, 11] : [16, 185, 129]);
-        doc.setTextColor(priorityColor[0], priorityColor[1], priorityColor[2]); doc.text(`[${tc.priority}]`, 55, y + 4);
-        doc.setTextColor(167, 139, 250); doc.text(`${tc.type}`, 85, y + 4);
-        doc.setFont("helvetica", "normal"); doc.setTextColor(203, 213, 225); doc.setFontSize(7);
-        doc.text(`Feature: ${tc.featureRef.substring(0, 60)}`, 20, y + 10);
-        doc.text(`Expected: ${tc.expected_result.substring(0, 68)}`, 20, y + 16);
-        doc.setTextColor(156, 163, 175); doc.text(`Steps: ${tc.steps[0]} → ${tc.steps[1] || ''}`, 20, y + 22);
-        y += 32;
-      }
-      doc.save("devqa_test_report.pdf");
-      showToast("PDF report downloaded!", "success");
-    }
-
-    function clearAll() {
-      document.getElementById("reqInput").value = "";
-      document.getElementById("outputArea").innerHTML = `<div class="dev-card empty-state" style="padding: 2rem;"><i class="fas fa-code" style="font-size: 2rem; opacity: 0.5;"></i><p style="margin-top: 1rem;">No test cases generated yet.<br>Enter features above and click GENERATE TEST SUITE</p></div>`;
-      currentTests = []; currentFeatureList = [];
-      outputMode = 'cards';
-      chatHistory = [];
-      const chatMessages = document.getElementById('chatMessages');
-      if (chatMessages) {
-        chatMessages.innerHTML = `<div class="chat-message bot">Hello QA tester! I am ready to review your test cases, suggest improvements, and help convert findings into table actions.</div>`;
-      }
-      if (stepInterval) clearInterval(stepInterval);
-      renderSteps(-1);
-      document.getElementById("qaDashboard").style.display = "none";
-      document.getElementById("pipelineStatus").innerHTML = `<i class="fas fa-hourglass-half"></i> Ready — Enter features and click GENERATE`;
-      if (chartRef) { chartRef.destroy(); chartRef = null; updatePipelineChart(-1); }
-      activePriorityFilter = null; activeTypeFilter = null;
-      document.querySelectorAll('.filter-chip').forEach(chip => chip.classList.remove('active-filter'));
-      document.getElementById("feedbackTestCount").value = "No tests yet";
-      updateFeedbackPreview();
-      showToast("All test data cleared.", "success");
-    }
-
-    function toggleFlowVisibility() {
-      const panel = document.getElementById("pipelineVisual");
-      panel.style.display = panel.style.display === "none" ? "block" : "none";
-    }
-
-    function toggleOutputMode() {
-      outputMode = outputMode === 'table' ? 'cards' : 'table';
-      renderFilteredTests();
-    }
-
-    function appendChatMessage(role, text) {
-      const chatMessages = document.getElementById('chatMessages');
-      if (!chatMessages) return;
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `chat-message ${role}`;
-
-      if (typeof marked !== 'undefined' && role === 'bot') {
-        messageDiv.innerHTML = marked.parse(text);
-      } else {
-        messageDiv.innerHTML = text.replace(/\n/g, '<br>');
-      }
-
-      // add table styles if there are any tables
-      const tables = messageDiv.querySelectorAll('table');
-      tables.forEach(table => {
-        table.className = 'qa-table';
-        table.style.marginTop = '10px';
-      });
-
-      chatMessages.appendChild(messageDiv);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-
-    async function sendChatQuestion(promptOverride) {
-      const inputField = document.getElementById('chatInput');
-      const messageText = promptOverride || inputField.value.trim();
-      if (!messageText) return;
-      appendChatMessage('user', messageText);
-      inputField.value = '';
-      const payload = {
-        message: messageText,
-        testCases: currentTests.slice(0, 25).map(tc => ({ id: tc.id, feature: tc.featureRef, type: tc.type, priority: tc.priority, expected_result: tc.expected_result, steps: tc.steps }))
-      };
-      try {
-        const response = await fetch('/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const data = await response.json();
-        if (data.error) {
-          appendChatMessage('bot', `Error: ${data.error}`);
-          showToast('QA chat failed. See console.', 'error');
-          console.error(data.error);
-        } else {
-          appendChatMessage('bot', data.response);
-        }
-      } catch (error) {
-        appendChatMessage('bot', `Connection error. Try again.`);
-        console.error(error);
-      }
-    }
-
-    function copyTestSteps(testId) {
-      const test = currentTests.find(tc => tc.id === testId);
-      if (!test) return;
-      const stepsText = test.steps.join('\n');
-      navigator.clipboard.writeText(stepsText).then(() => {
-        showToast(`Copied steps for ${testId}`);
-      }).catch(() => {
-        showToast('Unable to copy steps', 'error');
-      });
-    }
-
-    function askAboutTest(testId) {
-      const test = currentTests.find(tc => tc.id === testId);
-      if (!test) return;
-      const message = `Review QA test case ${test.id} for feature ${test.featureRef}. Type: ${test.type}, Priority: ${test.priority}. Steps: ${test.steps.join(' · ')}. Expected: ${test.expected_result}. Suggest any improvements or risk coverage issues.`;
-      sendChatQuestion(message);
-    }
-
-    async function resetChatConversation() {
-      chatHistory = [];
-      const chatMessages = document.getElementById('chatMessages');
-      if (chatMessages) {
-        chatMessages.innerHTML = `<div class="chat-message bot">Hello QA tester! I am ready to review your test cases, suggest improvements, and help convert findings into table actions.</div>`;
-      }
-      try {
-        await fetch('/chat/reset', { method: 'POST' });
-      } catch (e) {
-        console.error('Failed to reset chat history on server', e);
-      }
-    }
-
-    // Event Listeners
-    document.getElementById("runPipelineBtn").addEventListener("click", runFullPipeline);
-    document.getElementById("exportPdfBtn").addEventListener("click", exportPDF);
-    document.getElementById("clearBtn").addEventListener("click", clearAll);
-    document.getElementById("toggleFlowBtn").addEventListener("click", toggleFlowVisibility);
-    document.getElementById("clearFiltersBtn").addEventListener("click", clearFilters);
-    document.getElementById("sendFeedbackBtn").addEventListener("click", sendFeedbackToEmail);
-    document.getElementById("resetFeedbackBtn").addEventListener("click", resetFeedbackForm);
-    document.getElementById('chatSendBtn').addEventListener('click', () => sendChatQuestion());
-    document.getElementById('chatResetBtn').addEventListener('click', resetChatConversation);
-    document.getElementById('chatInput').addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        sendChatQuestion();
-      }
-    });
-
-    ['feedbackName', 'feedbackEmail', 'feedbackMessage'].forEach(id => {
-      document.getElementById(id).addEventListener('input', updateFeedbackPreview);
-    });
-
-    initRatingStars();
-    renderSteps(-1);
-    attachFilterEvents();
-    updateFeedbackPreview();
-  </script>
+  <script src="/static/js/app.js" defer></script>
 </body>
 
 </html>
