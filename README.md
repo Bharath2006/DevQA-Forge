@@ -143,27 +143,23 @@ Features:
 
 # 📂 Project Structure
 
-```bash
-DevQA-Forge/
-│
-├── backend/
-│   ├── app.py
-│   ├── api.py
-│   ├── database.py
-│   └── pdf_generator.py
-│
-├── frontend/
-│   ├── index.html
-│   ├── style.css
-│   └── script.js
-│
-├── templates/
-├── static/
-├── reports/
-├── requirements.txt
-└── README.md
-```
 
+```bash
+D:\DevQA Forge
+│
+├── app.py
+├── index.html
+│
+├── static
+│   ├── css
+│   │   └── styles.css
+│   │
+│   └── js
+│       └── app.js
+│
+└── __pycache__
+    └── app.cpython-313.pyc
+```
 ---
 
 # ⚙️ Installation
@@ -198,10 +194,22 @@ source venv/bin/activate
 
 ---
 
-## 3️⃣ Install Dependencies
+## 3️⃣ Install Required Packages
 
 ```bash
-pip install -r requirements.txt
+pip install flask
+```
+
+```bash
+pip install google-genai
+```
+
+```bash
+pip install reportlab
+```
+
+```bash
+pip install requests
 ```
 
 ---
@@ -277,6 +285,216 @@ export GEMINI_API_KEY=your_api_key
 - Reduce manual QA effort
 - Improve testing coverage
 - Accelerate releases
+
+---
+
+# 📥 Input Structure
+
+DevQA Forge accepts different types of QA and API testing inputs from users.
+
+---
+
+## 1️⃣ Feature / Requirement Input
+
+Users can enter:
+- User stories
+- Functional requirements
+- API descriptions
+- Feature details
+
+### Example Input
+
+```text
+Create login functionality with email and password validation.
+The system should prevent invalid logins and handle incorrect passwords.
+```
+
+### System Process
+- AI analyzes the requirement
+- Extracts testing scenarios
+- Generates QA test cases automatically
+
+---
+
+## 2️⃣ API Testing Input
+
+Users can test APIs by entering:
+
+### Example API Details
+
+```json
+{
+  "url": "https://api.example.com/login",
+  "method": "POST",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "body": {
+    "email": "test@gmail.com",
+    "password": "123456"
+  }
+}
+```
+
+### API Testing Includes
+- Status code validation
+- Response validation
+- Header verification
+- Error testing
+- Response time analysis
+
+---
+
+## 3️⃣ Database Validation Input
+
+Users can validate database connections using:
+
+```json
+{
+  "dbType": "MySQL",
+  "host": "localhost",
+  "database": "qa_testing",
+  "username": "root",
+  "password": "password"
+}
+```
+
+### Supported Databases
+- MySQL
+- PostgreSQL
+- MongoDB
+- SQL Server
+
+---
+
+# 📤 Output Structure
+
+DevQA Forge generates intelligent QA outputs automatically.
+
+---
+
+## 1️⃣ Generated Test Cases Output
+
+### Example Output
+
+```json
+{
+  "feature": "Login Functionality",
+  "test_cases": [
+    {
+      "id": "TC001",
+      "scenario": "Verify login with valid credentials",
+      "expected_result": "User should login successfully",
+      "priority": "High",
+      "status": "Pass"
+    },
+    {
+      "id": "TC002",
+      "scenario": "Verify login with invalid password",
+      "expected_result": "Error message should appear",
+      "priority": "High",
+      "status": "Pass"
+    }
+  ]
+}
+```
+
+---
+
+## 2️⃣ API Testing Output
+
+### Example Output
+
+```json
+{
+  "status_code": 200,
+  "response_time": "120ms",
+  "response_status": "Success",
+  "validation": "Passed"
+}
+```
+
+### API Analysis Output Includes
+- Response status
+- JSON validation
+- Error detection
+- Security validation
+- Performance insights
+
+---
+
+## 3️⃣ Database Validation Output
+
+### Example Output
+
+```json
+{
+  "database": "MySQL",
+  "connection": "Successful",
+  "status": "Connected",
+  "message": "Database connection validated successfully"
+}
+```
+
+---
+
+## 4️⃣ PDF Report Output
+
+Generated PDF contains:
+- QA test cases
+- API test results
+- Validation reports
+- Workflow diagrams
+- QA summaries
+
+### Export Format
+```text
+QA_Report.pdf
+```
+
+---
+
+# 🔄 Complete Project Workflow
+
+```text
+User Input
+    ↓
+AI Requirement Analysis
+    ↓
+Feature Extraction
+    ↓
+Test Case Generation
+    ↓
+API / Database Validation
+    ↓
+Result Analysis
+    ↓
+PDF Report Generation
+    ↓
+Final QA Output
+```
+
+---
+
+# 📊 Output Benefits
+
+✅ Faster QA process  
+✅ Reduced manual testing effort  
+✅ Intelligent test generation  
+✅ Professional QA reporting  
+✅ Realtime validation system  
+✅ Improved testing accuracy  
+
+---
+
+# 🚀 DevQA Forge Workflow Summary
+
+| Module | Input | Output |
+|---|---|---|
+| AI Test Generator | Feature Description | QA Test Cases |
+| API Analyzer | API Details | API Validation Report |
+| Database Validator | DB Configurations | Connection Status |
+| PDF Generator | QA Results | Downloadable Reports |
 
 ---
 
